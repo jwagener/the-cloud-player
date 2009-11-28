@@ -549,7 +549,7 @@ SC.Player.prototype = {
         'request_token_endpoint': '/soundcloud-connect/request_token',
         'access_token_endpoint': '/soundcloud-connect/access_token',
         'callback': function(query_obj){ 
-            $('#current-user-name').html('RealUsername');
+            $('.current-user-name').html(query_obj.username);
             $('body').removeClass('logged-out').addClass('logged-in');            
           }
       };

@@ -60,14 +60,14 @@
     <div id="flash"><div></div></div>
     <div id="header">
       <div id="login">
-        <a href="" id="about">About</a> | 
+        <!-- TODO jw <a href="" id="about">About</a> |  -->
         
         <div class="login">
           <a href="#" class="connect-to-soundcloud">Sign in with your SoundCloud Account</a>        
         </div>
         <div class="logout">
-        Hej <span class="current-user-name"><%= "@current_user.username" if @current_user %></a>
-          <a href="#" class="do-logout">Logout</a>
+        Hej <span class="current-user-name"><%= @current_user.username if @current_user %></span>
+          <a href="/soundcloud-connect/logout" class="do-logout">Logout</a>
         </div>
       </div>
       

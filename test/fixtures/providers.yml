@@ -1,0 +1,15 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  name: MyString
+  icon_src: MyString
+  host: MyString
+  access_token_path: MyString
+  request_token_path: MyString
+
+two:
+  name: MyString
+  icon_src: MyString
+  host: MyString
+  access_token_path: MyString
+  request_token_path: MyString

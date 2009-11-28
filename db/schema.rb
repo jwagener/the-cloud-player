@@ -9,11 +9,31 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20091122070702) do
+ActiveRecord::Schema.define(:version => 20091128174830) do
+
+  create_table "access_tokens", :force => true do |t|
+    t.integer  "provider_id"
+    t.integer  "remote_user_id"
+    t.string   "username"
+    t.string   "key"
+    t.string   "secret"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "campaigns", :force => true do |t|
     t.integer  "soundcloud_user_id"
     t.string   "track_url"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "providers", :force => true do |t|
+    t.string   "name"
+    t.string   "icon_src"
+    t.string   "host"
+    t.string   "access_token_path"
+    t.string   "request_token_path"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

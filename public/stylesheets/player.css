@@ -10,11 +10,11 @@ body {
   font-size: 12px;
 }
 
-body#logged-in #login {
+body.logged-in .login {
   display: none;
 }
 
-body#logged-out #logout {
+body.logged-out .logout {
   display: none;
 }
 

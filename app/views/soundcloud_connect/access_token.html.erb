@@ -9,7 +9,7 @@
 	<script>
 
 	window.addEventListener('load',function(){
-	  window.opener.SC.Connect.callback(SC.QueryToObject(document.URL));
+	  window.opener.SC.Connect.callback({username: "<%= @current_user.username %>"});
 	},true);
 	</script>
 </head>
