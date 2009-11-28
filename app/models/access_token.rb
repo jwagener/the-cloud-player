@@ -19,7 +19,7 @@ class AccessToken < ActiveRecord::Base
   
   
   def access_token
-    OAuth::AccessToken.new($soundcloud_consumer, access_token_key, access_token_secret)
+    OAuth::AccessToken.new($soundcloud_consumer, key, secret)
     
   end
   

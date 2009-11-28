@@ -20,6 +20,16 @@ class ApplicationController < ActionController::Base
     @current_user
   end
 
+  def sc_api_track_to_xspf_track(api_track)
+    {
+      :title => api_track.title,
+      :creator => api_track.attributes['user'].username,
+      :location => api_track.stream_url,
+      :identifier => api_track.permalink_url,
+      :duration => api_track.duration
+    }
+  end
+
   # Scrub sensitive parameters from your log
   # filter_parameter_logging :password
 end
