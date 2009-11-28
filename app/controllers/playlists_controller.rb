@@ -1,11 +1,15 @@
 class PlaylistsController < ApplicationController
   def index
-    if logged_in?
-      #current_user.client.
-      
-    else
-      render :layout => false
-    end
+    render :layout => false
+   # if logged_in?
+   #   #current_user.client.
+   #   render :json = {
+   #     :
+   #     
+   #   }
+   # else
+   #   render :layout => false
+   # end
   end
     
   def view
