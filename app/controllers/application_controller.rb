@@ -25,7 +25,7 @@ class ApplicationController < ActionController::Base
       :title => api_track.title,
       :creator => api_track.attributes['user'].username,
       :location => api_track.stream_url,
-      :identifier => api_track.permalink_url,
+      :identifier => api_track.permalink_url.hash.abs,
       :duration => api_track.duration
     }
   end
