@@ -23,7 +23,7 @@ class PlaylistsController < ApplicationController
     
   def view      
     if params[:playlist_param]=='SC-Tracks'
-      tracks = current_user.client.Track.find(:all, :from => '/me/tracks').map { |t| sc_api_track_to_xspf_track(t) }
+      tracks = current_user.client.Track.find(:all, :from => '/me/tracks').map { |t| sc_api_track_to_xspf_track(t) }.compact
       render :json => {
         :title => "My SoundCloud Tracks",
         :location => "/playlists/SC-Tracks",
@@ -31,7 +31,7 @@ class PlaylistsController < ApplicationController
         :tracks => tracks
       }
     elsif params[:playlist_param]=='SC-Favorites'
-      tracks = current_user.client.Track.find(:all, :from => '/me/favorites').map { |t| sc_api_track_to_xspf_track(t) }
+      tracks = current_user.client.Track.find(:all, :from => '/me/favorites').map { |t| sc_api_track_to_xspf_track(t) }.compact
       render :json => {
         :title => "My SoundCloud Favorites",
         :location => "/playlists/SC-Favorites",
