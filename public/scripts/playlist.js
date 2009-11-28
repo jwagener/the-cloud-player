@@ -192,43 +192,21 @@ SC.Playlist.prototype = {
       $("<div><div style='position:relative'><div id='throbber'></div></div></div>").appendTo(self.list);
       self.loading = true;
       self.tracks = [];
-      $.get(this.generateTracksUrl() + "&offset=" + this.offset, function(dataJS) {
-        var data = eval('(' + dataJS + ')');
-        if(data.response && parseInt(data.response) == 408) { // if google app engine timeout, then fallback to use the sc api directly, bypassing the caching layer
-          $.getJSON(self.generateTracksUrl("http://api.soundcloud.com/") + "&offset=" + self.offset, function(dataNonCached) {
-            self.processTrackData(dataNonCached);
-          });
-        } else {
-          self.processTrackData(data);
-        }
+      // get the tracks from the backend
+      $.get("/playlists/" + self.id + "?offset=" + this.offset, function(dataJS) {
+        var data = eval("(" + dataJS + ")");
+        self.processTrackData(data);
       });
     }
   },
   processTrackData : function(data) {
     var self = this;
     self.offset += this.limit;
-    if(data.length < this.limit) {
+    if(data.tracks.length < this.limit) {
       self.endOfList = true;
     }
-    // if persisted playlist we must sort the tracks array here according to the ids-string sort order
-    // kind of ugly but impossible to persist sort order since sql can't return ordered list based on id params in query
-    if(self.persisted && !self.properties.playlist.smart) {
-      var trackIds = self.generateTracksUrl().match(/ids=([^&]*)/)[1].split(",");
-      trackIds.pop(); // remove last ","
-      var newData = new Array();
-      $.each(trackIds,function() {
-        var id = this;
-        $.each(data,function() {
-          if(this.id == id) {
-            newData.push(this);
-            return;
-          }
-        });
-      });
-      data = newData; // replace data array with sorted array
-    }
     
-    self.tracks = data;
+    self.tracks = data.tracks;
     $("> div:last",self.list).remove();
 
     if(self.editable) {
@@ -442,29 +420,7 @@ SC.Playlist.prototype = {
       })
       .find("td:nth-child(1)").css("width",self.colWidths[0]).end()
       .find("td:nth-child(2)").css("width",self.colWidths[1]).text(track.title).end()
-      .find("td:nth-child(3)").css("width",self.colWidths[2]).html("<a href='#" + track.user.username.replace(/\s/, "+") + "'>" + track.user.username + "</a>")
-        .find("a")
-        .history(function(ev) {
-          self.player.removePlaylist("artist");
-          self.player.playlists["artist"] = new SC.Playlist({
-            is_owner: true,
-            playlist : {
-              id : "artist",
-              name : "Artist: " + track.user.username,
-              smart: true,
-              smart_filter: {
-                artist : track.user.uri,
-                order: "hotness",
-                hotness_from : "2007-01-01"
-              },
-              dontPersist : true,
-              dontShowPlaylistItem : true
-            }
-          },self.player);
-          self.player.switchPlaylist("artist");
-          self.player.loadArtistInfo(track.user.uri);
-        }).end()
-      .end()
+      .find("td:nth-child(3)").css("width",self.colWidths[2]).html(track.creator).end()
       .find("td:nth-child(4)").css("width",self.colWidths[3]).text(SC.formatMs(track.duration)).end()
       .find("td:nth-child(5)").css("width",self.colWidths[4]).html(track.description).attr("title",track.description).end()
       .find("td:nth-child(6)").css("width",self.colWidths[5]).text(track.bpm).end()
@@ -494,6 +450,10 @@ SC.Playlist.prototype = {
   },
   addToPlaylistsList: function() { // add the tab for the playlist
     var self = this;
+
+    // ugly, tmp, set to not break
+    this.properties.is_owner = true;
+
     $("<li listId='" + this.id + "' class='" + (this.properties.is_owner ? "" : "shared") + " " + (this.properties.playlist.collaborative ? "collaborative" : "") + " " + (this.persisted ? "" : "dont-persist") + " " + (this.properties.playlist.smart ? "smart" : "") + " " + (this.properties.playlist.search ? "search" : "") + "'><span></span><a href='#" + this.name.replace(/\s/, "+") + "'>" + this.name + (this.properties.is_owner ? "" : " <em>by " + this.properties.playlist.owner.nickname + "</em>") + "</a><a class='collaborative' title='Make Playlist Collaborative' href='/playlists/" + this.id + "'>&nbsp;</a><a class='share' title='Share Playlist' href='/share/" + this.properties.playlist.share_hash + "'>&nbsp;</a><a class='delete' title='Remove Playlist' href='/playlists/" + this.id + "'>&nbsp;</a></li>")
       .find('a:first').click(function(ev) {
         if($(this).parents("li").hasClass("active") && self.properties.is_owner && $("body").hasClass("logged-in")) {
@@ -541,7 +501,7 @@ SC.Playlist.prototype = {
               }
 
               $(window).keydown(editKey);
-            
+
             },500);
           }
         } else {
@@ -589,36 +549,36 @@ SC.Playlist.prototype = {
         }
         return false;
       }).end()
-      .appendTo("#playlists")
-      .hide()
-      .fadeIn();
-  	
-  	if(this.editable) { // if playlists are smart, they are read-only
-      $('#playlists li:last')
-    		.droppable({
-    			accept: function(draggable) {
-    				return $(draggable).is('tr');
-    			},
-    			activeClass: 'droppable-active',
-    			hoverClass: 'droppable-hover',
-    			tolerance: 'pointer',
-    			drop: function(ev, ui) {
-    			  self.player.justDropped = true;  // ugly, but I can't find a proper callback;
-    				var listId = $(this).attr('listId');
-    			  if(ui.draggable.siblings(".selected").length > 0) { //multi-drag
-      				var items = ui.draggable.parents("tbody").find("tr.selected");
-      				$.each(items,function() {
-        				self.addTrack(this.track,true);
-      				});
-              self.player.flash(items.length + " tracks were added to the playlist");
-    			  } else {
-      				self.addTrack($(ui.draggable)[0].track,true);
-              self.player.flash("The track " + $(ui.draggable)[0].track.title + " was added to the playlist");  			    
-    			  }
-            self.save();
-    			}
-    		});  	  
-  	}  		
+      .appendTo("#playlists");
+
+
+        	
+    // if(this.editable) { // if playlists are smart, they are read-only
+    //       $('#playlists li:last')
+    //        .droppable({
+    //          accept: function(draggable) {
+    //            return $(draggable).is('tr');
+    //          },
+    //          activeClass: 'droppable-active',
+    //          hoverClass: 'droppable-hover',
+    //          tolerance: 'pointer',
+    //          drop: function(ev, ui) {
+    //            self.player.justDropped = true;  // ugly, but I can't find a proper callback;
+    //            var listId = $(this).attr('listId');
+    //            if(ui.draggable.siblings(".selected").length > 0) { //multi-drag
+    //              var items = ui.draggable.parents("tbody").find("tr.selected");
+    //              $.each(items,function() {
+    //                self.addTrack(this.track,true);
+    //              });
+    //               self.player.flash(items.length + " tracks were added to the playlist");
+    //            } else {
+    //              self.addTrack($(ui.draggable)[0].track,true);
+    //               self.player.flash("The track " + $(ui.draggable)[0].track.title + " was added to the playlist");           
+    //            }
+    //             self.save();
+    //          }
+    //        });     
+    // }
   		
                       }
 }
