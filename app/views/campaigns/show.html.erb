@@ -1,0 +1,13 @@
+<p>
+  <b>Soundcloud user:</b>
+  <%=h @campaign.soundcloud_user_id %>
+</p>
+
+<p>
+  <b>Track url:</b>
+  <%=h @campaign.track_url %>
+</p>
+
+
+<%= link_to 'Edit', edit_campaign_path(@campaign) %> |
+<%= link_to 'Back', campaigns_path %>

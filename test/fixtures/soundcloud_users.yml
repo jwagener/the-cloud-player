@@ -1,0 +1,11 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  username: MyString
+  access_token_key: MyString
+  access_token_secret: MyString
+
+two:
+  username: MyString
+  access_token_key: MyString
+  access_token_secret: MyString

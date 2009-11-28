@@ -1,0 +1,18 @@
+<html>  
+  <head>
+    <title>GrabTheTrack</title>    
+    <link rel="stylesheet" type="text/css" href="/stylesheets/style.css" />
+    <%= javascript_include_tag 'jquery-1.3.2.min' %>
+    <%= javascript_include_tag 'sc-connect' %>
+    <%= javascript_include_tag 'application' %>
+  </head>
+  <body>
+    <div class="container container_login">
+
+      <div class="loginHeader">
+
+        <%= yield %>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  soundcloud_user_id: 1
+  track_url: MyString
+
+two:
+  soundcloud_user_id: 1
+  track_url: MyString

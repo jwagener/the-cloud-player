@@ -1,0 +1,2 @@
+module SoundcloudConnectHelper
+end

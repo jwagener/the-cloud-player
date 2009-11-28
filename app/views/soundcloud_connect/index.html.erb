@@ -1,0 +1,9 @@
+
+<% if @current_user %>
+  <%= "logged in as #{@current_user.username}"%>
+  <a href="/soundcloud-connect/logout">logout</a>
+  
+<% else %>
+
+  <a href="#" id="sc_connect" style="display: block; background-image: url(/images/sc-connect.png); width: 242px; height: 31px;"></a>
+<% end %>
