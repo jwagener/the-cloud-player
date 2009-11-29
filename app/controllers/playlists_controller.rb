@@ -35,9 +35,9 @@ class PlaylistsController < ApplicationController
     # assume soundcloud only for now     
     uri = URI.parse(params[:url])
     relative_url = "#{uri.path}?#{uri.query}"
-    p relative_url
-    playlist = Hash.from_xml(current_user.real_access_token.get(relative_url).body)
-    
+    playlist = Hash.from_xml(current_user.real_access_token.get(relative_url).body)['playlist']
+    playlist['tracks'] = playlist['trackList']['track']
+    playlist.delete('trackList')
     render :json => playlist
     
     
