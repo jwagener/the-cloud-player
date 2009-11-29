@@ -42,6 +42,7 @@ SC.Playlist.prototype = {
     this.limit = 40; // limit of ajax requests
     this.name = props.playlist.name;
     this.id = props.playlist.id;
+    this.location = props.playlist.location;
     this.version = props.playlist.version;
     this.offset = 0; // the offset when getting more tracks through the rest interface
     this.endOfList = false; // this is false until server returns less than 100 hits
@@ -139,53 +140,6 @@ SC.Playlist.prototype = {
     this.init(props);
     this.player.switchPlaylist(this.id);
   },
-  generateTracksUrl : function(baseUrl) { // generates the API url based on properties of the playlist
-    var format = "js";
-    if(!baseUrl) { // if no baseUrl then use json
-      var format = "json";
-      var baseUrl = "/api/";      
-    }
-    var pl = this.properties.playlist;
-    if(pl.smart) { // check for all smart playlist params
-      if(pl.smart_filter.user_favorites) { // user favs pl
-        baseUrl += "users/" + pl.smart_filter.user_favorites + "/favorites." + format + "?filter=streamable"
-      } else if(pl.smart_filter.artist) { // artist pl
-        // get the sc user_id from the uri
-        var tmp = pl.smart_filter.artist.split("/");
-        var userId = tmp[tmp.length-1];
-        baseUrl += "users/" + userId + "/tracks." + format + "?filter=streamable"
-      } else { // dynamic smart pl
-        baseUrl += "tracks." + format + "?filter=streamable";
-      }
-
-      if(pl.smart_filter.order == "hotness" && !pl.smart_filter.user_favorites) { // prevent favs hotness sorting API bug
-        var hotness_from = (pl.smart_filter.hotness_from ? pl.smart_filter.hotness_from : SC.dateLastMonth());
-        baseUrl = baseUrl + "&order=" + pl.smart_filter.order + "&created_at[from]=" + hotness_from;
-      } else { // default to sort by latest
-        baseUrl = baseUrl + "&order=created_at";
-      }
-      if(pl.smart_filter.genres) {
-        baseUrl = baseUrl + "&genres=" + pl.smart_filter.genres;
-      }
-      if(pl.smart_filter.search_term) {
-        baseUrl += "&q=" + pl.smart_filter.search_term;
-      }
-      if(pl.smart_filter.bpm_from && pl.smart_filter.bpm_from != 0) {
-        baseUrl += "&bpm[from]=" + pl.smart_filter.bpm_from;
-      }
-      if(pl.smart_filter.bpm_to && pl.smart_filter.bpm_to != 250) {
-        baseUrl += "&bpm[to]=" + pl.smart_filter.bpm_to;
-      }
-    } else { // this is normal playlist
-      baseUrl = baseUrl + "tracks." + format + "?filter=streamable&ids=" + this.properties.playlist.tracks;
-    }
-    if(format == "js") {
-      baseUrl += "&callback=?"; // add JSONP callback param      
-    }
-    // limit to tracks under 20 mins long
-    baseUrl += "&duration[to]=1200000&limit=" + this.limit; // increase limit to 100
-    return baseUrl;
-  },
   load : function() {
     var self = this;
     if(!this.endOfList && !this.loading) {
@@ -193,7 +147,7 @@ SC.Playlist.prototype = {
       self.loading = true;
       self.tracks = [];
       // get the tracks from the backend
-      $.get("/playlists/" + self.id + "?offset=" + this.offset, function(dataJS) {
+      $.get(self.location + "&offset=" + this.offset, function(dataJS) {
         var data = eval("(" + dataJS + ")");
         self.processTrackData(data);
       });
@@ -422,7 +376,7 @@ SC.Playlist.prototype = {
       .find("td:nth-child(2)").css("width",self.colWidths[1]).text(track.title).end()
       .find("td:nth-child(3)").css("width",self.colWidths[2]).html(track.creator).end()
       .find("td:nth-child(4)").css("width",self.colWidths[3]).text(SC.formatMs(track.duration)).end()
-      .find("td:nth-child(5)").css("width",self.colWidths[4]).html(track.description).attr("title",track.description).end()
+      .find("td:nth-child(5)").css("width",self.colWidths[4]).html(track.provider_id).end()
       .find("td:nth-child(6)").css("width",self.colWidths[5]).text(track.bpm).end()
       .find("td:nth-child(7)").css("width",self.colWidths[6]).html("<a href='#" + track.genre.replace(/\s/, "+") + "'>" + track.genre + "</a>")
         .find("a")

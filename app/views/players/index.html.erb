@@ -66,7 +66,8 @@
           <a href="#" class="connect-to-soundcloud">Sign in with your SoundCloud Account</a>        
         </div>
         <div class="logout">
-        Hej <span class="current-user-name"><%= @current_user.username if @current_user %></span>
+         Hej <span class="current-user-name"><%= @current_user.username if @current_user %></span>
+         | <a href="#" id="providers">Providers</a>
          | <a href="/soundcloud-connect/logout" class="do-logout">Logout</a>
         </div>
       </div>
@@ -142,8 +143,9 @@
       <ul id="playlists">
       </ul>
       <div id="create-playlists">
-        <a id="add-playlist" href="{{login_url}}">Playlist</a>
-        <a id="add-smart-playlist" href="{{login_url}}" class="smart-playlist">Smart Playlist</a>
+        <a id="add-playlist" href="#">Playlist</a>
+        <a id="add-smart-playlist" href="#">Smart Playlist</a>
+        <a id="add-xspf-playlist" href="#">XSPF</a>
       </div>
       <div id="artwork">
         <img src="http://a1.soundcloud.com/avatars/0001/1308/i039964_big.jpg">
@@ -201,8 +203,19 @@
       </div>
 
     </div>
-  
-  
+
+    <div id="providers-box">
+      <a href="#close" class="close">X</a>
+      <h1>Music Providers</h1>
+      <p>These are the music sources you have currently installed:</p>
+      <ul>
+        <li>SoundCloud.com</li>
+        <li>Hypem.com</li>
+        <li>Citysounds.fm</li>
+        <li>Forssmusic.com</li>
+      </ul>
+    </div>
+
     <!-- TEMPLATES -->
     <div id="templates">
 
@@ -214,7 +227,7 @@
               <th>Title</th>
               <th>Artist</th>
               <th>Time</th>
-              <th>Description</th>                                    
+              <th>Source</th>                                    
               <th>BPM</th>
               <th>Genre</th>
             </tr>
@@ -250,6 +263,16 @@
         <h1>Share This Playlist</h1>
         <p>Send this link to anyone who you want to share this playlist with:</p>
         <input type="text" value="foobar">
+      </div>
+    </div>
+
+    <div id="add-xspf-playlist">
+      <div class="add-xspf-playlist">
+        <a href="#close" class="close">X</a>
+        <h1>Add XSPF Playlist</h1>
+        <p>Add any XSPF playlist on the web by pasting it in this box:</p>
+        <input type="text" value="foobar">
+        <input type="submit" value="Add Playlist">
       </div>
     </div>
     <!-- END TEMPLATES -->

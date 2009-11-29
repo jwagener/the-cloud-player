@@ -330,6 +330,31 @@ SC.Player.prototype = {
       }
     });
     
+    // add xspf playlist button
+    $("#add-xspf-playlist").click(function(ev) {
+      $("#add-xspf-playlist > div:first")
+        .clone()
+        .find("a.close").click(function() {
+          $(this).parents("div.add-xspf-playlist").fadeOut(function() {
+            $(this).remove();
+          });
+          return false;
+        }).end()
+        .find("input:first").val("").end()
+        .find("input:last").click(function() {
+          $.post("/playlists",{location:$($(this).parents()[0]).find("input:first").val()},function() {
+            console.log('foo')
+          });
+          return false;
+        }).end()
+        .appendTo("body")
+        .fadeIn(function() {
+          $(".add-xspf-playlist input").focus().select();
+        });          
+      ev.preventDefault();
+    });
+    
+    
     // main keyboard listener
     $(window).keydown(function(ev) {
       if(!$("#q")[0].focused && !window.editingText) { // don't listen to key events if search field is focused or if editing text
@@ -411,7 +436,7 @@ SC.Player.prototype = {
     });
     
     // click behaviour for transport buttons
-    $("#play,#prev,#next,#rand,#loop,#add-playlist,#add-smart-playlist").mousedown(function() {
+    $("#play,#prev,#next,#rand,#loop,#add-playlist,#add-smart-playlist,#add-xspf-playlist").mousedown(function() {
       $(this).addClass("click");
     }).mouseup(function() {
       $(this).removeClass("click");
@@ -426,12 +451,14 @@ SC.Player.prototype = {
       $.get("/playlists",function(playlistsJS) {
         var playlists = eval("(" + playlistsJS + ")");
         $.each(playlists.playlists,function() {
+          this.identifier = hex_md5(this.identifier);
           // TODO: make more compact
           self.playlists[this.identifier] = new SC.Playlist({
             playlist: {
               id : this.identifier,
               name : this.title,
-              version : 0
+              version : 0,
+              location: this.location
             }
           },self);
         });
@@ -451,6 +478,13 @@ SC.Player.prototype = {
         }
         
       });
+
+      // providers dialog
+      $("#providers").click(function() {
+        $("#providers-box").fadeIn();
+        return false;
+      });
+
     } else { // not logged in, then load a few standard playlists without persisting
       self.playlists['latest'] = new SC.Playlist({
         playlist: {
@@ -547,7 +581,7 @@ SC.Player.prototype = {
       // show about box
       // TODO jw commented out for now
       //$("#about-box").fadeIn();
-      
+            
       var options = {
         'request_token_endpoint': '/soundcloud-connect/request_token',
         'access_token_endpoint': '/soundcloud-connect/access_token',

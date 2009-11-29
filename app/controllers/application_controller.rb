@@ -27,7 +27,8 @@ class ApplicationController < ActionController::Base
         :creator => api_track.attributes['user'].username,
         :location => api_track.stream_url,
         :identifier => api_track.permalink_url.hash.abs,
-        :duration => api_track.duration
+        :duration => api_track.duration,
+        :source => "soundcloud"
       }
     end
   end

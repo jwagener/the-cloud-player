@@ -841,7 +841,7 @@ table {
   overflow: hidden;
 }
 
-  #add-playlist, #add-smart-playlist {
+  #add-playlist, #add-smart-playlist, #add-xspf-playlist {
     display : block;
     float: left;
     height: 19px;
@@ -858,11 +858,20 @@ table {
   background-position: -395px -68px;
 }
 
+#add-xspf-playlist {
+  width: 34px;
+  background-position: -481px -68px;
+}
+
+#add-xspf-playlist.click {
+  background-position: -481px -95px;
+}
+
 #add-playlist.click {
   background-position: -395px -95px;
 }
 
-#add-playlist:hover, #add-smart-playlist:hover {
+#add-playlist:hover, #add-smart-playlist:hover, #add-xspf-playlist:hover {
   text-decoration: none;
 }
 
@@ -1134,7 +1143,7 @@ table {
 
 /* about box */
 
-#about-box, .share-playlist {
+#about-box, .share-playlist, .add-xspf-playlist,#providers-box {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -1154,7 +1163,7 @@ table {
   z-index: 20;
 }
 
-  #about-box a.close, .share-playlist a.close {
+  #about-box a.close, .share-playlist a.close, .add-xspf-playlist a.close {
     text-decoration: none;
     float: right;
     margin-right: -5px;
@@ -1287,6 +1296,26 @@ table {
     width: 100%;
     font-size: 16px;
   }
+
+.add-xspf-playlist {
+width: 400px;
+margin-left: -230px;
+margin-top: -100px;
+}
+
+.add-xspf-playlist h1 {
+  margin: -10px 0 15px 0;
+  padding: 0;
+}
+
+.add-xspf-playlist input {
+  width: 100%;
+  font-size: 16px;
+}
+
+.add-xspf-playlist input[type=submit] {
+  margin-top: 1em;
+}
 
 /* clearing */
 #header:after,#playlists:after, #lists table tr:after, .buttons:after {
