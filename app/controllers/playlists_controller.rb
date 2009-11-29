@@ -3,7 +3,8 @@ class PlaylistsController < ApplicationController
     if logged_in?
       #current_user.access_tokens.each do |access_token|
       playlists = Hash.from_xml(current_user.real_access_token.get('/xspf/index').body)['playlistList']['playlist'].map do |playlist|
-        playlist['provider_icon'] = '/images/favicon.png'
+        playlist['provider_id'] = 1
+        #playlist['provider_icon'] = '/images/favicon.png'
         playlist['location'] = playlist_view_path(:url => playlist['location'])
       
         playlist
@@ -36,7 +37,11 @@ class PlaylistsController < ApplicationController
     uri = URI.parse(params[:url])
     relative_url = "#{uri.path}?#{uri.query}"
     playlist = Hash.from_xml(current_user.real_access_token.get(relative_url).body)['playlist']
-    playlist['tracks'] = playlist['trackList']['track']
+    playlist['provider_id'] = 1
+    playlist['tracks'] = playlist['trackList']['track'].map do |track|
+      track['provider_id'] = 1
+      track
+    end
     playlist.delete('trackList')
     render :json => playlist
     
