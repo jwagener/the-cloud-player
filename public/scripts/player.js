@@ -423,9 +423,17 @@ SC.Player.prototype = {
     if($("body").hasClass("logged-in")) {
 
       // load playlists for user
-      $.getJSON("/playlists",function(playlists) {
-        $.each(playlists,function() {
-          self.playlists[this.playlist.id] = new SC.Playlist(this, self);
+      $.get("/playlists",function(playlistsJS) {
+        var playlists = eval("(" + playlistsJS + ")");
+        $.each(playlists.playlists,function() {
+          // TODO: make more compact
+          self.playlists[this.identifier] = new SC.Playlist({
+            playlist: {
+              id : this.identifier,
+              name : this.title,
+              version : 0
+            }
+          },self);
         });
         
         // show flash message if received a shared playlist
@@ -437,109 +445,104 @@ SC.Player.prototype = {
         } else if (location.search.search(/playlist_already_in_lib/) != -1) {
           self.flash("You already have this playlist");
         } else {
-          if(playlists.length > 0) { // switch to first playlist
-            self.switchPlaylist(playlists[0].playlist.id);
+          if(playlists.playlists.length > 0) { // switch to first playlist
+            self.switchPlaylist(playlists.playlists[0].identifier);
           }          
         }
-                        
+        
       });
     } else { // not logged in, then load a few standard playlists without persisting
       self.playlists['latest'] = new SC.Playlist({
-        is_owner: true,
         playlist: {
           id : "latest",
           name : "Hot Tracks",
-          smart : true,
-          version : 0,
-          smart_filter : {
-            order : "hotness"
-          }
+          version : 0
         }
       },self);
 
-      self.playlists['indie'] = new SC.Playlist({
-        is_owner: true,
-        playlist: {
-          id : "indie",
-          name : "Indie",
-          smart : true,
-          version : 0,
-          smart_filter : {
-            order : "hotness",
-            genres : "indie"
-          }
-        }
-      },self);
-      
-      self.playlists['deephouse'] = new SC.Playlist({
-        is_owner: true,
-        playlist: {
-          id : "deephouse",
-          name : "Deep House",
-          smart : true,
-          version : 0,
-          smart_filter : {
-            order : "hotness",
-            genres : "deep house"
-          }
-        }
-      },self);
-      
-      self.playlists['rock'] = new SC.Playlist({
-        is_owner: true,
-        playlist: {
-          id : "rock",
-          name : "Rock",
-          smart : true,
-          version : 0,
-          smart_filter : {
-            order : "hotness",
-            genres : "rock"
-          }
-        }
-      },self);
-      
-      self.playlists['techno'] = new SC.Playlist({
-        is_owner: true,
-        playlist: {
-          id : "techno",
-          name : "Techno",
-          smart : true,
-          version : 0,
-          smart_filter : {
-            order : "hotness",
-            genres : "techno"
-          }
-        }
-      },self);
-      
-      self.playlists['spokenword'] = new SC.Playlist({
-        is_owner: true,
-        playlist: {
-          id : "spokenword",
-          name : "Spoken Word",
-          smart : true,
-          version : 0,
-          smart_filter : {
-            order : "hotness",
-            genres : "spoken+word,spokenword"
-          }
-        }
-      },self);
-      
-      self.playlists['dubstep'] = new SC.Playlist({
-        is_owner: true,
-        playlist: {
-          id : "dubstep",
-          name : "Dubstep",
-          smart : true,
-          version : 0,
-          smart_filter : {
-            order : "hotness",
-            genres : "dubstep, dub+step"
-          }
-        }
-      },self);
+      // self.playlists['indie'] = new SC.Playlist({
+      //   is_owner: true,
+      //   playlist: {
+      //     id : "indie",
+      //     name : "Indie",
+      //     smart : true,
+      //     version : 0,
+      //     smart_filter : {
+      //       order : "hotness",
+      //       genres : "indie"
+      //     }
+      //   }
+      // },self);
+      // 
+      // self.playlists['deephouse'] = new SC.Playlist({
+      //   is_owner: true,
+      //   playlist: {
+      //     id : "deephouse",
+      //     name : "Deep House",
+      //     smart : true,
+      //     version : 0,
+      //     smart_filter : {
+      //       order : "hotness",
+      //       genres : "deep house"
+      //     }
+      //   }
+      // },self);
+      // 
+      // self.playlists['rock'] = new SC.Playlist({
+      //   is_owner: true,
+      //   playlist: {
+      //     id : "rock",
+      //     name : "Rock",
+      //     smart : true,
+      //     version : 0,
+      //     smart_filter : {
+      //       order : "hotness",
+      //       genres : "rock"
+      //     }
+      //   }
+      // },self);
+      // 
+      // self.playlists['techno'] = new SC.Playlist({
+      //   is_owner: true,
+      //   playlist: {
+      //     id : "techno",
+      //     name : "Techno",
+      //     smart : true,
+      //     version : 0,
+      //     smart_filter : {
+      //       order : "hotness",
+      //       genres : "techno"
+      //     }
+      //   }
+      // },self);
+      // 
+      // self.playlists['spokenword'] = new SC.Playlist({
+      //   is_owner: true,
+      //   playlist: {
+      //     id : "spokenword",
+      //     name : "Spoken Word",
+      //     smart : true,
+      //     version : 0,
+      //     smart_filter : {
+      //       order : "hotness",
+      //       genres : "spoken+word,spokenword"
+      //     }
+      //   }
+      // },self);
+      // 
+      // self.playlists['dubstep'] = new SC.Playlist({
+      //   is_owner: true,
+      //   playlist: {
+      //     id : "dubstep",
+      //     name : "Dubstep",
+      //     smart : true,
+      //     version : 0,
+      //     smart_filter : {
+      //       order : "hotness",
+      //       genres : "dubstep, dub+step"
+      //     }
+      //   }
+      // },self);
       
       // show about box
       // TODO jw commented out for now
@@ -579,7 +582,7 @@ SC.Player.prototype = {
 
   },
   load: function(track) {
-    var id = track.stream_url.substring(track.stream_url.lastIndexOf("/")+1);
+    var id = track.location.substring(track.location.lastIndexOf("/")+1);
     this.loading.css('width',"0%");
     this.progress.css('width',"0%");
     $("#player-display img.logo").fadeOut('slow');
@@ -588,7 +591,7 @@ SC.Player.prototype = {
     var self = this;
     this.audioTracks[id] = soundManager.createSound({
       id: id,
-      url: track.stream_url + "?oauth_consumer_key=UdbhZcCSuxR9AxcfR3uvgg",
+      url: track.location,
       volume : this.volume,
       whileloading : SC.throttle(200,function() {
           self.loading.css('width',(self.audio.bytesLoaded/self.audio.bytesTotal)*100+"%");
@@ -620,7 +623,7 @@ SC.Player.prototype = {
 
     $("#artist")
       .hide()
-      .html("<a href='#' class='artist-link'>" + track.user.username + "</a> · <span>" + track.title + "</span>" + " <a href='" + track.permalink_url + "' target='_blank'>»</a>" + (track.purchase_url ? " <a href='" + track.purchase_url + "' target='_blank'>Buy »</a>" : ""))
+      .html("<a href='#' class='artist-link'>" + track.creator + "</a> · <span>" + track.title + "</span>" + " <a href='" + track.permalink_url + "' target='_blank'>»</a>" + (track.purchase_url ? " <a href='" + track.purchase_url + "' target='_blank'>Buy »</a>" : ""))
       .find("a.artist-link")
         .click(function(ev) {
           self.removePlaylist("artist");
