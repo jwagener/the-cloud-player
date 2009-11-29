@@ -20,6 +20,7 @@ class Playlist < ActiveRecord::Base
     playlist = Hash.from_xml(get_xspf)['playlist']
     
     playlist['provider_id'] = 1
+    playlist['identifier'] = playlist['location']
     playlist['tracks'] = playlist['trackList']['track'].map do |track|
       track['provider_id'] = 1
       

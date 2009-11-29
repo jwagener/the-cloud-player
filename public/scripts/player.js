@@ -342,9 +342,30 @@ SC.Player.prototype = {
         }).end()
         .find("input:first").val("").end()
         .find("input:last").click(function() {
-          $.post("/playlists",{location:$($(this).parents()[0]).find("input:first").val()},function() {
-            console.log('foo')
+          $.post("/playlists",{location:$(this).parents("div.add-xspf-playlist").find("input:first").val()},function(dataJS) {
+            var data = eval("(" + dataJS + ")");
+            
+            var playlist = data;
+            playlist.identifier = hex_md5(playlist.identifier);
+            // TODO: make more compact
+            self.playlists[playlist.identifier] = new SC.Playlist({
+              playlist: {
+                id : playlist.identifier,
+                name : playlist.title,
+                version : 0,
+                location: playlist.location
+              }
+            },self);
+            
+            // switch the playlist
+            self.switchPlaylist(playlist.identifier);
+            
           });
+
+          $(this).parents("div.add-xspf-playlist").fadeOut(function() {
+            $(this).remove();
+          });
+
           return false;
         }).end()
         .appendTo("body")
