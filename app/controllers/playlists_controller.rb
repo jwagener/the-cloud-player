@@ -12,21 +12,6 @@ class PlaylistsController < ApplicationController
       
       render :json => { :playlists => playlists }
       #end
-      
-      #render :json => {
-      #  :playlists => [
-      #    {
-      #      :title => "My SoundCloud Tracks",
-      #      :location => "/playlists/SC-Tracks",
-      #      :identifier => "SC-Tracks"
-      #    },
-      #    {
-      #      :title => "My SoundCloud Favorites",
-      #      :location => "/playlists/SC-Favorites",
-      #      :identifier => "SC-Favorites"
-      #    },
-      #  ]
-      #}
     else
       render :layout => false
     end
@@ -40,6 +25,11 @@ class PlaylistsController < ApplicationController
     playlist['provider_id'] = 1
     playlist['tracks'] = playlist['trackList']['track'].map do |track|
       track['provider_id'] = 1
+      
+      track['extensions'].each do |k, v|
+        track[k] = v  
+      end
+      track.delete('extensions') 
       track
     end
     playlist.delete('trackList')
