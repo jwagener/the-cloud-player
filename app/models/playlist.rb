@@ -1,9 +1,7 @@
 class Playlist < ActiveRecord::Base
+  include ActionController::UrlWriter
+    
   belongs_to :access_token
-  def self.from_location(location)
-    Playlist.new()
-  end
-  
   
   def get_xspf
     if access_token_id.nil?
@@ -19,12 +17,12 @@ class Playlist < ActiveRecord::Base
   def to_jspf
     playlist = Hash.from_xml(get_xspf)['playlist']
     
+    playlist['location'] = playlist_view_path(:location => location)
     playlist['provider_id'] = 1
     playlist['identifier'] = playlist['location']
+    
     playlist['tracks'] = playlist['trackList']['track'].map do |track|
       track['provider_id'] = 1
-      
-      
       track['extensions'].each do |k, v|
         track[k] = v  
       end if track['extensions']

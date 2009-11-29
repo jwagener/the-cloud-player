@@ -1,0 +1,6 @@
+oauth
+multipart
+activeresource
+activesupport
+oauth-active-resource --version '>= 0.4.4' --source gemcutter.org 
+soundcloud-ruby-api-wrapper --version '>= 0.4.4' --source gemcutter.org

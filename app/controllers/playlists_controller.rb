@@ -18,22 +18,34 @@ class PlaylistsController < ApplicationController
   end
     
   def view 
-    # assume soundcloud only for now     
-    uri = URI.parse(params[:location])
-    relative_url = "#{uri.path}?#{uri.query}"
-    playlist = Hash.from_xml(current_user.real_access_token.get(relative_url).body)['playlist']
-    playlist['provider_id'] = 1
-    playlist['tracks'] = playlist['trackList']['track'].map do |track|
-      track['provider_id'] = 1
-      
-      track['extensions'].each do |k, v|
-        track[k] = v  
-      end
-      track.delete('extensions') 
-      track
+    location = params[:location]
+    if URI.parse(location).host == 'sandbox-soundcloud.com'
+      access_token = current_user
+    else
+      access_token = nil
     end
-    playlist.delete('trackList')
-    render :json => playlist
+    p location
+    playlist = Playlist.new(:location => params[:location], :access_token => access_token)
+    render :json => playlist.to_jspf
+    
+    # assume soundcloud only for now     
+    #uri = URI.parse(params[:location])
+    #relative_url = "#{uri.path}?#{uri.query}"
+    #p relative_url
+    #p current_user.real_access_token.get(relative_url).body
+    #playlist = Hash.from_xml(current_user.real_access_token.get(relative_url).body)['playlist']
+    #playlist['provider_id'] = 1
+    #playlist['tracks'] = playlist['trackList']['track'].map do |track|
+    #  track['provider_id'] = 1
+    #  
+    #  track['extensions'].each do |k, v|
+    #    track[k] = v  
+    #  end
+    #  track.delete('extensions') 
+    #  track
+    #end
+    #playlist.delete('trackList')
+    #render :json => playlist
   end
   
   def create
