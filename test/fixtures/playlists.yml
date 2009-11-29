@@ -1,0 +1,13 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  user_id: 1
+  access_token_id: 1
+  identifier: MyString
+  location: MyString
+
+two:
+  user_id: 1
+  access_token_id: 1
+  identifier: MyString
+  location: MyString
