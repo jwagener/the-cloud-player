@@ -6,7 +6,8 @@ class CreateProviders < ActiveRecord::Migration
       t.string :host
       t.string :access_token_path
       t.string :request_token_path
-
+      t.string :xspf_path
+    
       t.timestamps
     end
   end

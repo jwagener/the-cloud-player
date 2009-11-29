@@ -13,7 +13,8 @@ ActionController::Routing::Routes.draw do |map|
 
   # See how all your routes lay out with "rake routes"
   map.playlists '/playlists.:format', :controller => 'playlists', :action => 'index'
-  map.playlist  '/playlists/:playlist_param.:format', :controller => 'playlists', :action => 'view'
+  #map.playlist  '/playlists/:playlist_param.:format', :controller => 'playlists', :action => 'view'
+  map.playlist_view  '/playlists/view.:format', :controller => 'playlists', :action => 'view'
   
   map.api '/api/:resource.:format', :controller => 'api', :action => 'index'
 

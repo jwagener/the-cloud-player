@@ -43,9 +43,9 @@ Rails::Initializer.run do |config|
   $settings = {}
   
   $settings[:soundcloud_consumer] = {
-    :site       => "http://api.soundcloud.com",
-    :key        => 'NxfhygMGjt0rs8UQnueYhQ',
-    :secret     => 'KEQn9PTdHrvcL9NYLWq8B7qM9mdb7RoBL6tBvpjtE',
+    :site       => "http://api.sandbox-soundcloud.com",
+    :key        => 'rAWu808Yas1BmuM84co7A',
+    :secret     => 'P68ZuFJN4DsK3Kht2ZUvdFb0cFd7uFkTM7V0aQoMI',
   }
   
   #$settings[:soundcloud_consumer] = {

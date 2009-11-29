@@ -14,6 +14,7 @@ ActiveRecord::Schema.define(:version => 20091128174830) do
   create_table "access_tokens", :force => true do |t|
     t.integer  "provider_id"
     t.integer  "remote_user_id"
+    t.integer  "access_token_id"
     t.string   "username"
     t.string   "key"
     t.string   "secret"
