@@ -1,21 +1,28 @@
 class Playlist < ActiveRecord::Base
   include ActionController::UrlWriter
-    
+  before_create :set_title  
   belongs_to :access_token
   
-  def get_xspf
+  
+  def set_title
+    title = Hash.from_xml(xspf)['playlist']['title']
+  end
+  
+  def xspf
+    return @xspf if @xspf
     if access_token_id.nil?
-      xspf = Net::HTTP.get(URI.parse(location))      
+      @xspf = Net::HTTP.get(URI.parse(location))      
     else
       parsed_uri = URI.parse(location)
       relative_location = "#{parsed_uri.path}?#{parsed_uri.query}" 
-      xspf = access_token.real_access_token.get(relative_location).body
+      @xspf = access_token.real_access_token.get(relative_location).body
     end    
-    xspf
+    
+    @xspf
   end
   
   def to_jspf
-    playlist = Hash.from_xml(get_xspf)['playlist']
+    playlist = Hash.from_xml(xspf)['playlist']
     
     uri = URI.parse(location)
     playlist['title'] = uri.host if playlist['title'].blank?

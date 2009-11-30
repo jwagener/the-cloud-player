@@ -16,10 +16,8 @@ ActionController::Routing::Routes.draw do |map|
   
   #map.playlist  '/playlists/:playlist_param.:format', :controller => 'playlists', :action => 'view'
   map.playlist_view  '/playlists/view.:format', :controller => 'playlists', :action => 'view', :conditions => {:method => :get}
-  
-  
   map.playlist_create  '/playlists.:format', :controller => 'playlists', :action => 'create', :conditions => {:method => :post}
-  
+  map.playlist_destroy  '/playlists.:format', :controller => 'playlists', :action => 'destroy', :conditions => {:method => :delete}
 
 
   
