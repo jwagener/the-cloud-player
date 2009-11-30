@@ -24,7 +24,7 @@ class PlaylistsController < ApplicationController
     else
       access_token = nil
     end
-    p location
+
     playlist = Playlist.new(:location => params[:location], :access_token => access_token)
     render :json => playlist.to_jspf
     
