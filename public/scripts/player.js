@@ -507,13 +507,30 @@ SC.Player.prototype = {
       });
 
     } else { // not logged in, then load a few standard playlists without persisting
-      self.playlists['latest'] = new SC.Playlist({
-        playlist: {
-          id : "latest",
-          name : "Hot Tracks",
-          version : 0
-        }
-      },self);
+      // self.playlists['latest'] = new SC.Playlist({
+      //   playlist: {
+      //     id : "latest",
+      //     name : "Hot Tracks",
+      //     version : 0
+      //   }
+      // },self);
+
+      // load playlists for user
+      $.get("/playlists",function(playlistsJS) {
+        var playlists = eval("(" + playlistsJS + ")");
+        $.each(playlists.playlists,function() {
+          this.identifier = hex_md5(this.identifier);
+          // TODO: make more compact
+          self.playlists[this.identifier] = new SC.Playlist({
+            playlist: {
+              id : this.identifier,
+              name : this.title,
+              version : 0,
+              location: this.location
+            }
+          },self);
+        });
+      });
 
       // self.playlists['indie'] = new SC.Playlist({
       //   is_owner: true,
@@ -609,6 +626,26 @@ SC.Player.prototype = {
         'callback': function(query_obj){ 
             $('.current-user-name').html(query_obj.username);
             $('body').removeClass('logged-out').addClass('logged-in');            
+            // TODO eric reload playlists
+
+            // load playlists for user
+            $.get("/playlists",function(playlistsJS) {
+              var playlists = eval("(" + playlistsJS + ")");
+              $.each(playlists.playlists,function() {
+                this.identifier = hex_md5(this.identifier);
+                // TODO: make more compact
+                self.playlists[this.identifier] = new SC.Playlist({
+                  playlist: {
+                    id : this.identifier,
+                    name : this.title,
+                    version : 0,
+                    location: this.location
+                  }
+                },self);
+              });
+            });
+
+
           }
       };
       $('.connect-to-soundcloud').each(function(button){

@@ -9,12 +9,15 @@ class PlaylistsController < ApplicationController
         playlist
       end
       
-      playlists = playlists +  Playlist.find(:all, :conditions => ['user_id = ?',current_user.id]).map(&:to_jspf)
+      playlists = playlists + Playlist.find(:all, :conditions => ['user_id = ?',current_user.id]).map(&:to_jspf)
       
       render :json => { :playlists => playlists }
       #end
     else
-      render :layout => false
+      playlists = [ Playlist.new(:location => 'http://sandbox-soundcloud.com/xspf?url=http://sandbox-soundcloud.com/forss/sets/soulhack') ] 
+      playlists = playlists.map(&:to_jspf)
+      
+      render :json => { :playlists => playlists }
     end
   end
     
