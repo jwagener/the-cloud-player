@@ -17,6 +17,9 @@ class Playlist < ActiveRecord::Base
   def to_jspf
     playlist = Hash.from_xml(get_xspf)['playlist']
     
+    uri = URI.parse(location)
+    playlist['title'] = uri.host if playlist['title'].blank?
+    
     playlist['location'] = playlist_view_path(:location => location)
     playlist['provider_id'] = 1
     playlist['identifier'] = playlist['location']
