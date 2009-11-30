@@ -530,6 +530,7 @@ SC.Player.prototype = {
             }
           },self);
         });
+        self.switchPlaylist(playlists.playlists[0].identifier);
       });
 
       // self.playlists['indie'] = new SC.Playlist({
