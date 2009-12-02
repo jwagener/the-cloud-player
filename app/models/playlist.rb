@@ -30,7 +30,7 @@ class Playlist < ActiveRecord::Base
     playlist['location'] = playlist_view_path(:location => location)
     playlist['provider_id'] = 1
     playlist['identifier'] = playlist['location']
-    
+    logger.warn(location)
     playlist['tracks'] = playlist['trackList']['track'].map do |track|
       track['provider_id'] = 1
       track['extensions'].each do |k, v|
