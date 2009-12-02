@@ -336,6 +336,15 @@ SC.Playlist.prototype = {
     if (track.bpm == null) {
       track.bpm = "";
     }
+    if (track.creator == null) {
+      track.creator = "Unknown";
+    }
+    if (track.title == null) {
+      track.title = "Untitled";
+    }
+    if (track.duration == null) {
+      track.duration = 0;
+    }
 
     var self = this;
     
