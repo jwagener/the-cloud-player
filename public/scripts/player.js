@@ -627,7 +627,10 @@ SC.Player.prototype = {
         'callback': function(query_obj){ 
             $('.current-user-name').html(query_obj.username);
             $('body').removeClass('logged-out').addClass('logged-in');            
-            // TODO eric reload playlists
+
+            // remove default playlists
+            $("#playlists li").remove();
+            $("#lists li").remove();
 
             // load playlists for user
             $.get("/playlists",function(playlistsJS) {
