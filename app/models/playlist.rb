@@ -22,6 +22,8 @@ class Playlist < ActiveRecord::Base
   end
   
   def to_jspf
+    logger.warn("to_jspf #{location}")
+
     playlist = Hash.from_xml(xspf)['playlist']
     
     uri = URI.parse(location)
@@ -30,7 +32,6 @@ class Playlist < ActiveRecord::Base
     playlist['location'] = playlist_view_path(:location => location)
     playlist['provider_id'] = 1
     playlist['identifier'] = playlist['location']
-    logger.warn(location)
     playlist['tracks'] = playlist['trackList']['track'].map do |track|
       track['provider_id'] = 1
       track['extensions'].each do |k, v|
@@ -38,7 +39,7 @@ class Playlist < ActiveRecord::Base
       end if track['extensions']
       track.delete('extensions') 
       track
-    end
+    end unless playlist['trackList']['track'].nil?
     playlist.delete('trackList')
     playlist
   end
