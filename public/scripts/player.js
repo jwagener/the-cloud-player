@@ -887,6 +887,7 @@ soundManager.consoleOnly = true;
 soundManager.debugMode = false; // disable debug mode
 soundManager.defaultOptions.multiShot = false;
 soundManager.useHighPerformance = false;
+soundManager.useMovieStar = true;
 
 soundManager.onload = function() {
   // soundManager is ready to use (create sounds and so on)
