@@ -627,7 +627,10 @@ SC.Player.prototype = {
         'callback': function(query_obj){ 
             $('.current-user-name').html(query_obj.username);
             $('body').removeClass('logged-out').addClass('logged-in');            
-            // TODO eric reload playlists
+
+            // remove default playlists
+            $("#playlists li").remove();
+            $("#lists li").remove();
 
             // load playlists for user
             $.get("/playlists",function(playlistsJS) {
@@ -884,6 +887,7 @@ soundManager.consoleOnly = true;
 soundManager.debugMode = false; // disable debug mode
 soundManager.defaultOptions.multiShot = false;
 soundManager.useHighPerformance = false;
+soundManager.useMovieStar = true;
 
 soundManager.onload = function() {
   // soundManager is ready to use (create sounds and so on)
