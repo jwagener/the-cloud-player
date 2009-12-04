@@ -303,10 +303,22 @@ SC.Player.prototype = {
     $("#add-playlist").click(function(ev) {
       if($("body").hasClass("logged-in")) {
         var pos = $("#playlists li:not(.dont-persist)").index($("#playlists li:not(.dont-persist):last"))+1; //FIXME respect non-persisted playlists, and first
-        $.post("/playlists",{'name':"Untitled playlist",'position': pos},function(data) {
-          var item = eval('(' + data + ')');
-          self.playlists[item.playlist.id] = new SC.Playlist(item, self);
-          self.switchPlaylist(item.playlist.id);
+        $.post("/playlists",{'title':"Untitled playlist",'position': pos},function(data) {
+          
+          var playlist = eval('(' + data + ')');
+
+//          self.playlists[item.playlist.id] = new SC.Playlist(item, self);
+
+          self.playlists[playlist.identifier] = new SC.Playlist({
+            playlist: {
+              id : playlist.identifier,
+              name : playlist.title,
+              version : 0,
+              location: playlist.location
+            }
+          },self);
+
+          self.switchPlaylist(playlist.identifier);
           $("#playlists li:last a:first").click();
         });
         ev.preventDefault();

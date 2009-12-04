@@ -256,7 +256,7 @@ SC.Playlist.prototype = {
   saveName : function() {
     var self = this;
     this.name = this.name.replace(/<.*?>/,""); // sanitize name
-    $.post("/playlists/" + this.id ,{"_method":"PUT","name":this.name},function(dataJS) {
+    $.post("/playlists/" + this.id ,{"_method":"PUT","title":this.name},function(dataJS) {
       var data = eval('(' + dataJS + ')');
       if(data.response == 200) {
         self.version++;
