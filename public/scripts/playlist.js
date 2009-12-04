@@ -345,6 +345,9 @@ SC.Playlist.prototype = {
     if (track.duration == null) {
       track.duration = 0;
     }
+    if (track.provider_id == null) {
+      track.provider_id = 0;
+    }
 
     var self = this;
     

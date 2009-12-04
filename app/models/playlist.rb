@@ -1,4 +1,7 @@
 class Playlist < ActiveRecord::Base
+  has_many :listings, :order => "listings.position", :dependent => :destroy
+  has_many   :tracks,   :order => "listings.position", :through => :listings, :source => :track
+
   include ActionController::UrlWriter
   before_create :set_title  
   belongs_to :access_token

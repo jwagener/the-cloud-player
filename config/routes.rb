@@ -15,9 +15,11 @@ ActionController::Routing::Routes.draw do |map|
   map.playlists '/playlists.:format', :controller => 'playlists', :action => 'index', :conditions => {:method => :get}
   
   #map.playlist  '/playlists/:playlist_param.:format', :controller => 'playlists', :action => 'view'
-  map.playlist_view  '/playlists/view.:format', :controller => 'playlists', :action => 'view', :conditions => {:method => :get}
-  map.playlist_create  '/playlists.:format', :controller => 'playlists', :action => 'create', :conditions => {:method => :post}
-  map.playlist_destroy  '/playlists.:format', :controller => 'playlists', :action => 'destroy', :conditions => {:method => :delete}
+  map.playlist_remote_view      '/playlists/remote.:format',     :controller => 'playlists', :action => 'remote',    :conditions => {:method => :get}
+  map.playlist_view      '/playlists/view.:format',     :controller => 'playlists', :action => 'view',    :conditions => {:method => :get}
+  map.playlist_update    '/playlists/:playlist_param',  :controller => 'playlists', :action => 'update',  :conditions => {:method => :put}
+  map.playlist_create    '/playlists.:format',          :controller => 'playlists', :action => 'create',  :conditions => {:method => :post}
+  map.playlist_destroy   '/playlists.:format',          :controller => 'playlists', :action => 'destroy', :conditions => {:method => :delete}
 
 
   
