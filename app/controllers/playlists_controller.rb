@@ -84,7 +84,9 @@ class PlaylistsController < ApplicationController
   def update_tracks(playlist, tracks_params)
     
     playlist.listings.destroy_all
+    
     tracks_params.each_with_index do |track_params, i|
+    #  p "#{i} #{track_params[:identifier]}"
       track = Track.find_or_create_by_id({:id => track_params[:identifier]}.merge(track_params))
       playlist.listings.create!(:track => track, :position => i)
       #track = Track.find_or_create_by_location(track_params, :include => [:listings])
