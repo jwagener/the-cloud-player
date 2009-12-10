@@ -32,8 +32,6 @@ class Playlist < ActiveRecord::Base
   end
 
   def location
-    p self.to_param
-    p read_attribute(:location).blank?
     if read_attribute(:location).blank?
       location = playlist_view_path(self, :ignore => 'me')
     else
@@ -55,6 +53,11 @@ class Playlist < ActiveRecord::Base
       playlist['identifier'] = id
       playlist['location'] = location
       playlist['tracks'] = []
+      
+      tracks.each do |track|
+        playlist['tracks'] << track.to_jspf
+      end
+      
       playlist[:read_only] = false
       return playlist
     else

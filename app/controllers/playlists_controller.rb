@@ -65,36 +65,44 @@ class PlaylistsController < ApplicationController
   def update
     # TODO Security
     playlist = Playlist.find_by_id(params[:playlist_param])
+    #p params
+    #p params.slice(*Playlist::ALLOWED_ATTRIBUTES)
     playlist.update_attributes!(params.slice(*Playlist::ALLOWED_ATTRIBUTES))
-#    update_tracks(playlist, params[:playlist][:tracks])
+    update_tracks(playlist, params[:tracks])
     render :json => playlist.to_jspf
   end
   
   
   def destroy
-    Playlist.find_by_id(params[:playlist_param])
+    Playlist.find_by_id(params[:playlist_param]).desotry
     #Playlist.find_by_location(params[:location]).destroy
   end
   
   private
   
   def update_tracks(playlist, tracks_params)
+    
+    playlist.listings.destroy_all
     tracks_params.each_with_index do |track_params, i|
-      track = Track.find_or_create_by_location(track_params, :include => [:listings])
-      track.update_attributes!(track_params)
-      
-      has_listing = false 
-      
-      track.listings.each do |listing|
-        if listing.playlist == playlist
-          listing.update_attributes!(:position => i) if listing.position != i
-          has_listing = true
-        end
-      end
-      
-      unless has_listing
-        playlist.listings.create!(:track => track, :position => i)
-      end
+      track = Track.find_or_create_by_id({:id => track_params[:identifier]}.merge(track_params))
+      playlist.listings.create!(:track => track, :position => i)
+      #track = Track.find_or_create_by_location(track_params, :include => [:listings])
+      ##track.update_attributes!(track_params)
+      #
+      #has_listing = false 
+      #p playlist
+      #track.listings.each do |listing|
+      #  p listing
+      #  if listing.playlist == playlist
+      #    p "position #{i} - #{listing}"
+      #    listing.update_attributes!(:position => i) if listing.position != i
+      #    has_listing = true
+      #  end
+      #end
+      #
+      #unless has_listing
+      #  playlist.listings.create!(:track => track, :position => i)
+      #end
     end      
   end
 end
