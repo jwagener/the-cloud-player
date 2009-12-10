@@ -52,6 +52,12 @@ SC.Playlist.prototype = {
     
     this.editable = (!self.properties.playlist.smart && (self.properties.playlist.collaborative || (self.properties.is_owner && !self.properties.playlist.collaborative)));
     
+    // tmp hack
+    this.editable = true;
+    
+    // the array to hold the tracks order
+    this.tracks = [];
+    
     $('#playlist')
       .clone()
       .attr('id',"list-" + props.playlist.id)
@@ -145,7 +151,6 @@ SC.Playlist.prototype = {
     if(!this.endOfList && !this.loading) {
       $("<div><div style='position:relative'><div id='throbber'></div></div></div>").appendTo(self.list);
       self.loading = true;
-      self.tracks = [];
       // get the tracks from the backend
       
       if(self.location.indexOf("?")>=0){
@@ -167,7 +172,7 @@ SC.Playlist.prototype = {
       self.endOfList = true;
     }
     
-    self.tracks = data.tracks;
+//    self.tracks = data.tracks;
     $("> div:last",self.list).remove();
 
     if(self.editable) {
@@ -194,16 +199,13 @@ SC.Playlist.prototype = {
           ui.item.css("display","block"); //prevent dragged element from getting hidden
         },
         beforeStop : function(e,ui) {
-          if(self.player.justDropped) { // disable sort behavior if dropping in another playlist. ugly, but I can't seem to find a proper callback;
-            self.player.justDropped = false; // ugly, but I can't find a proper callback;
-          } else {
-            ui.placeholder.after(ui.item.parents("tbody").find("tr.selected")); // multi-select-hack, move all selected items to new location                            
-          }
+          $(ui.placeholder).trigger("playlistOrderChange",{ui:ui, playlist: self});
         },
         stop : function(e,ui) {
         }
       });
     } else {
+      console.log('readonly');
       // for read-only playlists, FIXME: make more DRY by moving default options to separate hash
       $(self.list).sortable({
         appendTo: "#track-drag-holder",
@@ -233,17 +235,31 @@ SC.Playlist.prototype = {
       });
     };
 
-    $.each(self.tracks,function() {
-      self.addTrack(this);
+    $.each(data.tracks,function() {
+      // probably check here if the track already exists in the local tracks hash
+      self.player.tracks[this.identifier] = this;
+
+      // add the track to the playlist
+      self.addTrack(self.player.tracks[this.identifier]);
+      
     });
+    
     //show new tracks with fade fx
     self.loading = false;
     
   },
   save : function() {
     var self = this;
+    $.post(this.location ,{"_method":"PUT","tracks":JSON.stringify(self.tracks)},function(dataJS) {
+      var data = eval('(' + dataJS + ')');
+      // if(data.response == 200) {
+      //   self.version++;
+      // } else {
+      //   self.player.flash("Failed when saving playlist. Reloading.");
+      //   self.reload(data); // reload the playlist based on data in json response
+      // }
+    });
     
-    console.log(self.tracks);
     
     
 //    var tracks = "";
@@ -267,9 +283,9 @@ SC.Playlist.prototype = {
   saveName : function() {
     var self = this;
     this.name = this.name.replace(/<.*?>/,""); // sanitize name
-    $.post(this.location ,{"_method":"PUT","title":this.name},function(dataJS) {
+    $.post(this.location ,{"_method":"PUT","title":this.name},function(dataJS,textStatus) {      
       var data = eval('(' + dataJS + ')');
-      if(data.response == 200) {
+      if(textStatus == "success") {
         self.version++;
       } else {
         self.player.flash("Sorry, saving the playlist failed");
@@ -280,9 +296,9 @@ SC.Playlist.prototype = {
     var self = this;
     // find out position index, ignore non-persisted playlists
     var pos = $("#playlists li:not(.dont-persist)").index($("#playlists li:not(.dont-persist)[listid=" + this.id + "]"));
-    $.post("/playlists/" + this.id ,{"_method":"PUT","position":pos},function(dataJS) {
+    $.post("/playlists/" + this.id ,{"_method":"PUT","position":pos},function(dataJS,textStatus) {
       var data = eval('(' + dataJS + ')');
-      if(data.response == 200) {
+      if(textStatus == "success") {
       } else {
         self.player.flash("Sorry, saving the playlist position failed");
       }
@@ -339,9 +355,18 @@ SC.Playlist.prototype = {
     var tr = $("tr",this.list).eq(pos);
     tr.addClass("playing");
     this.currentPos = pos;
-    this.player.load(tr[0].track);
+    
+    // fixme
+    this.player.load(tr.data("track"));
   },
   addTrack : function(track,single) {
+
+    var self = this;
+
+    // update the model
+    self.tracks.push(track);
+
+    // sanitization for display
     track.description = (track.description ? track.description.replace(/(<([^>]+)>)/ig,"") : "");
 
     if (track.bpm == null) {
@@ -359,9 +384,6 @@ SC.Playlist.prototype = {
     if (track.provider_id == null) {
       track.provider_id = 0;
     }
-
-    var self = this;
-    
     if(!track.genre) {
       track.genre = "";
     }
@@ -377,22 +399,14 @@ SC.Playlist.prototype = {
         self.loadTrack(self.currentPos);
       })
       .click(function(e) {
+        // hopefully tmp code to workaround event issues
+        var data = {};
         if(e.shiftKey) {
-          if($(this).siblings(".selected").length > 0) {
-            var list = self.list;
-            var oldIdx = $("tr",list).index($(this).siblings(".selected")[0]);
-            var newIdx = $("tr",list).index(this);
-            var start = (oldIdx - newIdx < 0 ? oldIdx : newIdx);
-            var stop = (oldIdx - newIdx < 0 ? newIdx : oldIdx);
-            for(var i = start;i <= stop;i++) {
-              $("tr",list).eq(i).addClass("selected");              
-            }
-          }
+          data.shiftKey = e.shiftKey;
         } else if (e.metaKey) {
-          $(this).toggleClass("selected");
-        } else {
-          $(this).siblings().removeClass("selected").end().toggleClass("selected");          
+          data.metaKey = e.metaKey;
         }
+        $(this).trigger("playlistSelectionChange",data);
       })
       .find("td:nth-child(1)").css("width",self.colWidths[0]).end()
       .find("td:nth-child(2)").css("width",self.colWidths[1]).text(track.title).end()
@@ -422,7 +436,7 @@ SC.Playlist.prototype = {
         }).end()
       .end()
       .appendTo(this.list);
-    $("tr:last",this.list)[0].track = track;
+    $("tr:last",this.list).data("track",track);
   },
   addToPlaylistsList: function() { // add the tab for the playlist
     var self = this;
@@ -527,34 +541,19 @@ SC.Playlist.prototype = {
       }).end()
       .appendTo("#playlists");
 
-
-        	
-    // if(this.editable) { // if playlists are smart, they are read-only
-    //       $('#playlists li:last')
-    //        .droppable({
-    //          accept: function(draggable) {
-    //            return $(draggable).is('tr');
-    //          },
-    //          activeClass: 'droppable-active',
-    //          hoverClass: 'droppable-hover',
-    //          tolerance: 'pointer',
-    //          drop: function(ev, ui) {
-    //            self.player.justDropped = true;  // ugly, but I can't find a proper callback;
-    //            var listId = $(this).attr('listId');
-    //            if(ui.draggable.siblings(".selected").length > 0) { //multi-drag
-    //              var items = ui.draggable.parents("tbody").find("tr.selected");
-    //              $.each(items,function() {
-    //                self.addTrack(this.track,true);
-    //              });
-    //               self.player.flash(items.length + " tracks were added to the playlist");
-    //            } else {
-    //              self.addTrack($(ui.draggable)[0].track,true);
-    //               self.player.flash("The track " + $(ui.draggable)[0].track.title + " was added to the playlist");           
-    //            }
-    //             self.save();
-    //          }
-    //        });     
-    // }
-  		
-                      }
+    if(this.editable) { // if playlists are smart, they are read-only
+      $('#playlists li:last')
+        .droppable({
+          accept: function(draggable) {
+            return $(draggable).is('tr');
+          },
+          activeClass: 'droppable-active',
+          hoverClass: 'droppable-hover',
+          tolerance: 'pointer',
+          drop: function(ev, ui) {
+            $(document).trigger("addTracksToPlaylist",{ui:ui, playlist: self});
+          }
+        });
+    }		
+  }
 }
