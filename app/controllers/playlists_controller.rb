@@ -35,6 +35,11 @@ class PlaylistsController < ApplicationController
     end
   end
     
+  def view 
+    playlist = Playlist.find_by_id(params[:playlist_param])
+    render :json => playlist.to_jspf
+  end
+    
   def remote
     location = params[:location]
     if URI.parse(location).host == 'sandbox-soundcloud.com'
@@ -49,7 +54,7 @@ class PlaylistsController < ApplicationController
   def create
     playlist = if params[:location].blank?
       # local
-      Playlist.create(params[:playlist].merge({:user_id => current_user.id}))
+      Playlist.create(params.slice(*Playlist::ALLOWED_ATTRIBUTES).merge({:user_id => current_user.id}))
     else
       # a remote playlist
       Playlist.create(:location => params[:location], :user_id => current_user.id)
@@ -60,15 +65,15 @@ class PlaylistsController < ApplicationController
   def update
     # TODO Security
     playlist = Playlist.find_by_id(params[:playlist_param])
-    
-    playlist.update_attributes!(params[:playlist])
-    update_tracks(playlist, params[:playlist][:tracks])
+    playlist.update_attributes!(params.slice(*Playlist::ALLOWED_ATTRIBUTES))
+#    update_tracks(playlist, params[:playlist][:tracks])
     render :json => playlist.to_jspf
   end
   
   
   def destroy
-    Playlist.find_by_location(params[:location]).destroy
+    Playlist.find_by_id(params[:playlist_param])
+    #Playlist.find_by_location(params[:location]).destroy
   end
   
   private

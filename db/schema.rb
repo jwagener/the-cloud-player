@@ -34,6 +34,8 @@ ActiveRecord::Schema.define(:version => 20091129175950) do
     t.integer  "access_token_id"
     t.string   "identifier"
     t.string   "location"
+    t.string   "title"
+    t.string   "creator"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

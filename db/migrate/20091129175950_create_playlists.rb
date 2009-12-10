@@ -5,7 +5,8 @@ class CreatePlaylists < ActiveRecord::Migration
       t.integer :access_token_id
       t.string :identifier
       t.string :location
-
+      t.string :title
+      t.string :creator
       t.timestamps
     end
   end
