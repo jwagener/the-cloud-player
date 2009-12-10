@@ -5,6 +5,11 @@
     <%= javascript_include_tag 'jquery-1.3.2.min' %>
     <%= javascript_include_tag 'sc-connect' %>
     <%= javascript_include_tag 'application' %>
+    
+    <% content_for :javascript do %>
+      <%= "var TCP_GLOBALS = #{javascript_globals.to_json};"%>
+    
+    <% end %>
   </head>
   <body>
     <div class="container container_login">

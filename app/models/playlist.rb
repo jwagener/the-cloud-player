@@ -1,17 +1,48 @@
 class Playlist < ActiveRecord::Base
   ALLOWED_ATTRIBUTES = [:title]
-  ALL_ATTRIBUTES = [:title, :location]
+  ALL_ATTRIBUTES = [:title, :location, :provider_id, :read_only]
 
   has_many :listings, :order => "listings.position", :dependent => :destroy
   has_many   :tracks,   :order => "listings.position", :through => :listings, :source => :track
 
   include ActionController::UrlWriter
-  before_create :set_title  
+  
+  before_create :refresh, :if => :remote?
+  after_create  :refresh_tracks, :if => :remote? 
   belongs_to :access_token
   
+  def read_only 
+    false
+  end
   
-  def set_title
-    title = Hash.from_xml(xspf)['playlist']['title'] unless attributes[:location].blank?
+  def refresh
+    
+    p "Refreshing #{location}"
+    playlist = Hash.from_xml(xspf)['playlist']
+    uri = URI.parse(location)
+    
+    provider = Provider.find_or_create_by_host(:host => uri.host)
+    provider_id = provider.id
+    
+    title = playlist['title'].blank? ? uri.host : playlist['title']
+    location = playlist['location']
+    identifier = playlist['location']
+  end
+  
+  def refresh_tracks
+    playlist = Hash.from_xml(xspf)['playlist']
+    unless playlist['trackList']['track'].nil?
+      listings.destroy_all
+      playlist['trackList']['track'].each_with_index do |track_hash, i|
+        track = Track.from_hash(track_hash, provider_id)
+        
+        listings.create!(:track => track, :position => i)
+      end
+    end
+  end
+  
+  def remote?
+    !read_attribute(:location).blank?
   end
   
   def xspf
@@ -32,7 +63,7 @@ class Playlist < ActiveRecord::Base
   end
 
   def location
-    if read_attribute(:location).blank?
+    unless remote?
       location = playlist_view_path(self, :ignore => 'me')
     else
       read_attribute(:location)
@@ -42,9 +73,9 @@ class Playlist < ActiveRecord::Base
   def title
     read_attribute(:title).to_s
   end
-  
+    
   def to_jspf
-    if read_attribute(:location).blank?
+    unless remote?
       playlist = {}
       ALL_ATTRIBUTES.each do |k|
         playlist[k] = self.send(k)

@@ -30,7 +30,12 @@
   	<meta name="author" content="Eric Wahlforss"/>
     <link href="/stylesheets/player.css" media="screen" rel="stylesheet" type="text/css" />
     <link href="/images/favicon.ico" rel="shortcut icon" />
-  
+    
+    <script type='text/javascript'>
+      <%= "var TCP_GLOBALS = #{javascript_globals.to_json};"%>
+    </script>
+    
+    
     <%=
       %w{
       firebugx.js
@@ -227,7 +232,7 @@
               <th>Title</th>
               <th>Artist</th>
               <th>Time</th>
-              <th>Source</th>                                    
+              <th>Src</th>                                    
               <th>BPM</th>
               <th>Genre</th>
             </tr>
