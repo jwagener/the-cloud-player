@@ -398,7 +398,7 @@ SC.Playlist.prototype = {
       .find("td:nth-child(2)").css("width",self.colWidths[1]).text(track.title).end()
       .find("td:nth-child(3)").css("width",self.colWidths[2]).html(track.creator).end()
       .find("td:nth-child(4)").css("width",self.colWidths[3]).text(SC.formatMs(track.duration)).end()
-      .find("td:nth-child(5)").css("width",self.colWidths[4]).html("<img src='" + TCP_GLOBALS.providers[track.provider_id+""].icon_src + "' />").end()
+      .find("td:nth-child(5)").css("width",self.colWidths[4]).html("<img src='" + (TCP_GLOBALS.providers[track.provider_id+""] ? TCP_GLOBALS.providers[track.provider_id+""].icon_src : "") + "' />").end()
       .find("td:nth-child(6)").css("width",self.colWidths[5]).text(track.bpm).end()
       .find("td:nth-child(7)").css("width",self.colWidths[6]).html("<a href='#" + track.genre.replace(/\s/, "+") + "'>" + track.genre + "</a>")
         .find("a")

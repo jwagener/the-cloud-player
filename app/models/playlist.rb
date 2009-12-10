@@ -21,8 +21,8 @@ class Playlist < ActiveRecord::Base
     playlist = Hash.from_xml(xspf)['playlist']
     uri = URI.parse(location)
     
-    provider = Provider.find_or_create_by_host(:host => uri.host)
-    provider_id = provider.id
+    #provider_id = Provider.find_or_create_by_host(:host => uri.host).id
+    provider_id = Provider.from_host(uri.host).id
     
     title = playlist['title'].blank? ? uri.host : playlist['title']
     location = playlist['location']

@@ -4,19 +4,11 @@ require 'nokogiri'
 class PlaylistsController < ApplicationController
   def index
     if logged_in?
-      #current_user.access_tokens.each do |access_token|
-#      p Hash.from_xml(current_user.real_access_token.get('/xspf/index').body)['playlistList']['playlist']
       xml = current_user.real_access_token.get('/xspf/index').body
       doc = Nokogiri::XML(xml)
       
       playlists = Hash.from_xml(current_user.real_access_token.get('/xspf/index').body)['playlistList']['playlist'].map do |playlist|
-     # playlists 
-      #playlists = doc.xpath('//playlist').map do |playlist|
-      #  playlist_hash = {}
-      #  p playlist.to_hash
-       #p playlist.children['']
-      #  p playlist.methods.sort
-#        playlist['image'] 
+
         playlist['provider_id'] = 1
         playlist['location'] = playlist_remote_view_path(:location => playlist['location'])
                 
@@ -66,10 +58,10 @@ class PlaylistsController < ApplicationController
   def update
     # TODO Security
     playlist = Playlist.find_by_id(params[:playlist_param])
-    #p params
-    #p params.slice(*Playlist::ALLOWED_ATTRIBUTES)
+    p params
+    p params.slice(*Playlist::ALLOWED_ATTRIBUTES)
     playlist.update_attributes!(params.slice(*Playlist::ALLOWED_ATTRIBUTES))
-    update_tracks(playlist, params[:tracks])
+    update_tracks(playlist, params[:tracks]) if params[:tracks]
     render :json => playlist.to_jspf
   end
   
@@ -87,7 +79,6 @@ class PlaylistsController < ApplicationController
     playlist.listings.destroy_all
     
     tracks_params.each_with_index do |track_params, i|
-    #  p "#{i} #{track_params[:identifier]}"
       track = Track.find_or_create_by_id({:id => track_params[:identifier]}.merge(track_params))
       playlist.listings.create!(:track => track, :position => i)
       #track = Track.find_or_create_by_location(track_params, :include => [:listings])
