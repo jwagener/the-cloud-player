@@ -484,7 +484,8 @@ SC.Player.prototype = {
       $.get("/playlists",function(playlistsJS) {
         var playlists = eval("(" + playlistsJS + ")");
         $.each(playlists.playlists,function() {
-          this.identifier = hex_md5(this.identifier);
+
+          this.identifier = hex_md5(this.identifier+"");
           // TODO: make more compact
           self.playlists[this.identifier] = new SC.Playlist({
             playlist: {
