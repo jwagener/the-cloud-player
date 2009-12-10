@@ -19,7 +19,7 @@ ActionController::Routing::Routes.draw do |map|
   map.playlist_view        '/playlists/:playlist_param.:format',     :controller => 'playlists', :action => 'view',    :conditions => {:method => :get}
   map.playlist_update      '/playlists/:playlist_param',  :controller => 'playlists', :action => 'update',  :conditions => {:method => :put}
   map.playlist_create      '/playlists.:format',          :controller => 'playlists', :action => 'create',  :conditions => {:method => :post}
-  map.playlist_destroy     '/playlists.:format',          :controller => 'playlists', :action => 'destroy', :conditions => {:method => :delete}
+  map.playlist_destroy     '/playlists/:playlist_param.:format',          :controller => 'playlists', :action => 'destroy', :conditions => {:method => :delete}
 
 
   

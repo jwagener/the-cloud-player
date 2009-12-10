@@ -74,7 +74,8 @@ class PlaylistsController < ApplicationController
   
   
   def destroy
-    Playlist.find_by_id(params[:playlist_param]).desotry
+    playlist = Playlist.find_by_id(params[:playlist_param]).destroy
+    render :nothing => true
     #Playlist.find_by_location(params[:location]).destroy
   end
   
