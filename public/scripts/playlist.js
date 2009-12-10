@@ -235,23 +235,27 @@ SC.Playlist.prototype = {
   },
   save : function() {
     var self = this;
-    var tracks = "";
-    $("tr:not(.droppable-placeholder)",this.list).each(function() {
-      tracks += this.track.id + ",";
-    });
-    if($("tr:not(.droppable-placeholder)",this.list).length == 0) {
-      tracks = "0";
-    }
     
-    $.post("/playlists/" + this.id ,{"_method":"PUT","tracks":tracks,"version":this.version},function(dataJS) {
-      var data = eval('(' + dataJS + ')');
-      if(data.response == 200) {
-        self.version++;
-      } else {
-        self.player.flash("Failed when saving playlist. Reloading.");
-        self.reload(data); // reload the playlist based on data in json response
-      }
-    });
+    console.log(self.tracks);
+    
+    
+//    var tracks = "";
+    // $("tr:not(.droppable-placeholder)",this.list).each(function() {
+    //   tracks += this.track.id + ",";
+    // });
+    // if($("tr:not(.droppable-placeholder)",this.list).length == 0) {
+    //   tracks = "0";
+    // }
+    
+    // $.post("/playlists/" + this.id ,{"_method":"PUT","tracks":tracks,"version":this.version},function(dataJS) {
+    //   var data = eval('(' + dataJS + ')');
+    //   if(data.response == 200) {
+    //     self.version++;
+    //   } else {
+    //     self.player.flash("Failed when saving playlist. Reloading.");
+    //     self.reload(data); // reload the playlist based on data in json response
+    //   }
+    // });
   },
   saveName : function() {
     var self = this;
@@ -279,7 +283,7 @@ SC.Playlist.prototype = {
   },
   destroy : function() {
     if(this.persisted) {
-      $.post("/playlists/" + this.id,{"_method":"DELETE"},function() {
+      $.post(this.location,{"_method":"DELETE"},function() {
       });      
     }
     // select first playlist after delete, if exists
