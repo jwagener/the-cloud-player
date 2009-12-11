@@ -185,43 +185,43 @@ SC.Player.prototype = {
         }
     });
     
-    // change order of a playlist
-    $(document).bind("playlistOrderChange",function(e,data) {
-      console.log('order changed');
+    $(document)
+      .bind("playlistOrderChange",function(e,data) { // change order of a playlist
+        console.log('order changed');
       
-      if(data.playlist.player.justDropped) { // disable sort behavior if dropping in another playlist. ugly, but I can't seem to find a proper callback;
-        data.playlist.player.justDropped = false; // ugly, but I can't find a proper callback;
-      } else {
-        $(e.target).after(data.ui.item.parents("tbody").find("tr.selected")); // multi-select-hack, move all selected items to new location
-      }
+        if(data.playlist.player.justDropped) { // disable sort behavior if dropping in another playlist. ugly, but I can't seem to find a proper callback;
+          data.playlist.player.justDropped = false; // ugly, but I can't find a proper callback;
+        } else {
+          $(e.target).after(data.ui.item.parents("tbody").find("tr.selected")); // multi-select-hack, move all selected items to new location
+        }
       
-      // update tracks model
-      data.playlist.tracks = $.map(data.ui.item.parents("tbody").find("tr:not(.droppable-placeholder)"), function(el, index){
-        return $(el).data("track");
-      });
-      
-    });
-
-    // add tracks to a playlist
-    $(document).bind("addTracksToPlaylist",function(e,data) {
-      console.log('adding tracks to a playlist');
-  
-      data.playlist.player.justDropped = true;  // ugly, but I can't find a proper callback;
-
-      if(data.ui.draggable.siblings(".selected").length > 0) { //multi-drag
-        var items = data.ui.draggable.parents("tbody").find("tr.selected");
-        $.each(items,function() {
-          data.playlist.addTrack($(this).data("track"),true);
+        // update tracks model
+        data.playlist.tracks = $.map(data.ui.item.parents("tbody").find("tr:not(.droppable-placeholder)"), function(el, index){
+          return $(el).data("track");
         });
-         data.playlist.player.flash(items.length + " tracks were added to the playlist");
-      } else {
-        data.playlist.addTrack($(data.ui.draggable).data("track"),true);
-        data.playlist.player.flash("The track " + $(data.ui.draggable).data("track").title + " was added to the playlist");           
-      }
 
-      data.playlist.save();
+        data.playlist.save();
       
-    });
+      })
+      .bind("addTracksToPlaylist",function(e,data) { // add tracks to a playlist
+        console.log('adding tracks to a playlist');
+  
+        data.playlist.player.justDropped = true;  // ugly, but I can't find a proper callback;
+
+        if(data.ui.draggable.siblings(".selected").length > 0) { //multi-drag
+          var items = data.ui.draggable.parents("tbody").find("tr.selected");
+          $.each(items,function() {
+            data.playlist.addTrack($(this).data("track"),true);
+          });
+           data.playlist.player.flash(items.length + " tracks were added to the playlist");
+        } else {
+          data.playlist.addTrack($(data.ui.draggable).data("track"),true);
+          data.playlist.player.flash("The track " + $(data.ui.draggable).data("track").title + " was added to the playlist");           
+        }
+
+        data.playlist.save();
+      
+      });
 
     
     // init width from cookie
