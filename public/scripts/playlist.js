@@ -250,15 +250,33 @@ SC.Playlist.prototype = {
   },
   save : function() {
     var self = this;
-    $.post(this.location ,{"_method":"PUT","tracks":JSON.stringify(self.tracks)},function(dataJS) {
-      var data = eval('(' + dataJS + ')');
-      // if(data.response == 200) {
-      //   self.version++;
-      // } else {
-      //   self.player.flash("Failed when saving playlist. Reloading.");
-      //   self.reload(data); // reload the playlist based on data in json response
-      // }
+    // $.post(this.location ,{"_method":"PUT","tracks":JSON.stringify(self.tracks)},function(dataJS) {
+    //   var data = eval('(' + dataJS + ')');
+    //   // if(data.response == 200) {
+    //   //   self.version++;
+    //   // } else {
+    //   //   self.player.flash("Failed when saving playlist. Reloading.");
+    //   //   self.reload(data); // reload the playlist based on data in json response
+    //   // }
+    // });
+
+    $.ajax({
+      url : this.location,
+      contentType: "application/json",
+      dataType : "json",
+      type : "POST",
+      data : {"_method":"PUT","tracks":JSON.stringify(self.tracks)}
     });
+    //    ,{"_method":"PUT","tracks":JSON.stringify(self.tracks)},function(dataJS) {
+    //   var data = eval('(' + dataJS + ')');
+    //   // if(data.response == 200) {
+    //   //   self.version++;
+    //   // } else {
+    //   //   self.player.flash("Failed when saving playlist. Reloading.");
+    //   //   self.reload(data); // reload the playlist based on data in json response
+    //   // }
+    // });
+
     
     
     
