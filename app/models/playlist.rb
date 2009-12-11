@@ -1,6 +1,6 @@
 class Playlist < ActiveRecord::Base
   ALLOWED_ATTRIBUTES = [:title]
-  ALL_ATTRIBUTES = [:title, :location, :provider_id, :read_only]
+  ALL_ATTRIBUTES = [:title, :provider_id, :read_only]
 
   has_many :listings, :order => "listings.position", :dependent => :destroy
   has_many   :tracks,   :order => "listings.position", :through => :listings, :source => :track
@@ -64,7 +64,7 @@ class Playlist < ActiveRecord::Base
 
   def location
     unless remote?
-      location = playlist_view_path(self, :ignore => 'me')
+      location = playlist_view_path(self)
     else
       read_attribute(:location)
     end
@@ -75,42 +75,48 @@ class Playlist < ActiveRecord::Base
   end
     
   def to_jspf
-    unless remote?
+    #unless remote?
       playlist = {}
       ALL_ATTRIBUTES.each do |k|
         playlist[k] = self.send(k)
       end
+      playlist[:read_only] = false
+      
       #playlist = self.
       playlist['identifier'] = id
-      playlist['location'] = location
+      p remote?
+      #playlist['location'] = remote? ? playlist_remote_view_path(:location => location) : location
+      #playlist['location'] =
+      playlist['location'] = remote? ? playlist_view_path(self) : location
+      
+      p playlist['location']
       playlist['tracks'] = []
       
       tracks.each do |track|
         playlist['tracks'] << track.to_jspf
       end
       
-      playlist[:read_only] = false
       return playlist
-    else
-      
-      
-      playlist = Hash.from_xml(xspf)['playlist']
-      uri = URI.parse(location)
-      playlist['title'] = uri.host if playlist['title'].blank?
-      playlist[:read_only] = true
-      playlist['location'] = playlist_view_path(self)
-      playlist['provider_id'] = 1
-      playlist['identifier'] = playlist['location']
-      playlist['tracks'] = playlist['trackList']['track'].map do |track|
-        track['provider_id'] = 1
-        track['extensions'].each do |k, v|
-          track[k] = v  
-        end if track['extensions']
-        track.delete('extensions') 
-        track
-      end unless playlist['trackList']['track'].nil?
-      playlist.delete('trackList')
-      return playlist
-    end
+    #else
+    #  
+    #  
+    #  playlist = Hash.from_xml(xspf)['playlist']
+    #  uri = URI.parse(location)
+    #  playlist['title'] = uri.host if playlist['title'].blank?
+    #  playlist[:read_only] = true
+    #  playlist['location'] = playlist_view_path(self)
+    #  playlist['provider_id'] = 1
+    #  playlist['identifier'] = playlist['location']
+    #  playlist['tracks'] = playlist['trackList']['track'].map do |track|
+    #    track['provider_id'] = 1
+    #    track['extensions'].each do |k, v|
+    #      track[k] = v  
+    #    end if track['extensions']
+    #    track.delete('extensions') 
+    #    track
+    #  end unless playlist['trackList']['track'].nil?
+    #  playlist.delete('trackList')
+    #  return playlist
+    #end
   end
 end

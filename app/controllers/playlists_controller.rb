@@ -14,11 +14,11 @@ class PlaylistsController < ApplicationController
                 
         playlist
       end
-      
+      p Playlist.find(:all, :conditions => ['user_id = ?',current_user.id])
+      p Playlist.find(:all, :conditions => ['user_id = ?',current_user.id]).first.to_jspf
       playlists = playlists + Playlist.find(:all, :conditions => ['user_id = ?',current_user.id]).map(&:to_jspf)
-      
+      p playlists.to_json
       render :json => { :playlists => playlists }
-      #end
     else
       playlists = [ Playlist.new(:location => 'http://sandbox-soundcloud.com/xspf?url=http://sandbox-soundcloud.com/forss/sets/soulhack') ] 
       playlists = playlists.map(&:to_jspf)
@@ -59,9 +59,9 @@ class PlaylistsController < ApplicationController
     # TODO Security
     playlist = Playlist.find_by_id(params[:playlist_param])
     p params
-    p params.slice(*Playlist::ALLOWED_ATTRIBUTES)
+    p JSON.parse(params[:tracks])
     playlist.update_attributes!(params.slice(*Playlist::ALLOWED_ATTRIBUTES))
-    update_tracks(playlist, params[:tracks]) if params[:tracks]
+    update_tracks(playlist, JSON.parse(params[:tracks])) if params[:tracks]
     render :json => playlist.to_jspf
   end
   
@@ -79,7 +79,8 @@ class PlaylistsController < ApplicationController
     playlist.listings.destroy_all
     
     tracks_params.each_with_index do |track_params, i|
-      track = Track.find_or_create_by_id({:id => track_params[:identifier]}.merge(track_params))
+      p track_params
+      track = Track.find_or_create_by_id({:id => track_params['identifier']}.merge(track_params))
       playlist.listings.create!(:track => track, :position => i)
       #track = Track.find_or_create_by_location(track_params, :include => [:listings])
       ##track.update_attributes!(track_params)

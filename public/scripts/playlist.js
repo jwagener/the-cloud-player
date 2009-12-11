@@ -262,10 +262,10 @@ SC.Playlist.prototype = {
 
     $.ajax({
       url : this.location,
-      contentType: "application/json",
+      //contentType: "application/json",
       dataType : "json",
-      type : "POST",
-      data : {"_method":"PUT","tracks":JSON.stringify(self.tracks)}
+      type : "PUT",
+      data : {"tracks":JSON.stringify(self.tracks)}
     });
     //    ,{"_method":"PUT","tracks":JSON.stringify(self.tracks)},function(dataJS) {
     //   var data = eval('(' + dataJS + ')');
