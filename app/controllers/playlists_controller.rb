@@ -14,15 +14,11 @@ class PlaylistsController < ApplicationController
                 
         playlist
       end
-      p Playlist.find(:all, :conditions => ['user_id = ?',current_user.id])
-      p Playlist.find(:all, :conditions => ['user_id = ?',current_user.id]).first.to_jspf
       playlists = playlists + Playlist.find(:all, :conditions => ['user_id = ?',current_user.id]).map(&:to_jspf)
-      p playlists.to_json
       render :json => { :playlists => playlists }
     else
       playlists = [ Playlist.new(:location => 'http://sandbox-soundcloud.com/xspf?url=http://sandbox-soundcloud.com/forss/sets/soulhack') ] 
       playlists = playlists.map(&:to_jspf)
-      
       render :json => { :playlists => playlists }
     end
   end
@@ -58,8 +54,7 @@ class PlaylistsController < ApplicationController
   def update
     # TODO Security
     playlist = Playlist.find_by_id(params[:playlist_param])
-    p params
-    p JSON.parse(params[:tracks])
+
     playlist.update_attributes!(params.slice(*Playlist::ALLOWED_ATTRIBUTES))
     update_tracks(playlist, JSON.parse(params[:tracks])) if params[:tracks]
     render :json => playlist.to_jspf
