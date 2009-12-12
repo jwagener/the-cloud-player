@@ -1,6 +1,9 @@
 class User < ActiveRecord::Base
   has_many :access_tokens
+  #has_many :playlists
   
+  has_many :playlist_listings, :dependent => :destroy
+  has_many :playlists, :through => :playlist_listings, :source => :playlist, :order => "playlist_listings.position"
   
   def self.from_access_token(access_token)
     soundcloud_client = Soundcloud.register({:access_token => access_token, :site => $settings[:soundcloud_consumer][:site]})

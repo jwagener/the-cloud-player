@@ -9,24 +9,30 @@ class Playlist < ActiveRecord::Base
   
   before_create :refresh, :if => :remote?
   after_create  :refresh_tracks, :if => :remote? 
-  belongs_to :access_token
+  #belongs_to :access_token
+  
+  belongs_to :provider
+  
+  has_many :playlist_listings, :dependent => :destroy
+  has_many :users, :through => :playlist_listings, :source => :user
+  
+  # belongs_to :owner
+  #OLD belongs_to :user
   
   def read_only 
     false
   end
   
   def refresh
-    
     p "Refreshing #{location}"
     playlist = Hash.from_xml(xspf)['playlist']
     uri = URI.parse(location)
     
-    #provider_id = Provider.find_or_create_by_host(:host => uri.host).id
     provider_id = Provider.from_host(uri.host).id
     
-    title = playlist['title'].blank? ? uri.host : playlist['title']
-    location = playlist['location']
-    identifier = playlist['location']
+    self.title = playlist['title'].blank? ? uri.host : playlist['title']
+    self.location = playlist['location']
+    self.identifier = playlist['location']
   end
   
   def refresh_tracks
