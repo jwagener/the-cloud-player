@@ -6,7 +6,7 @@ class SoundcloudConnectController < ApplicationController
   end
   
   def logout
-    session['current_user'] = nil  
+    session['current_user_id'] = nil  
     set_current_user
     redirect_to :controller => 'players', :action => 'index'
   end
