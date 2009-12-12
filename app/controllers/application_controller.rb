@@ -9,7 +9,7 @@ class ApplicationController < ActionController::Base
   before_filter :set_current_user
   
   def set_current_user
-    @current_user = session['current_user']
+    @current_user = session['current_user_id'].blank? ? nil : User.find(session['current_user_id'])
   end
 
   def logged_in?

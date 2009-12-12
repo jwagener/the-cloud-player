@@ -22,7 +22,8 @@ class SoundcloudConnectController < ApplicationController
   def access_token
     request_token = OAuth::RequestToken.new($soundcloud_consumer, session[:request_token_key], session[:request_token_secret])
     access_token = request_token.get_access_token(:oauth_verifier => params[:oauth_verifier])
-    session['current_user'] = @current_user = AccessToken.from_access_token(access_token)
+    @current_user = User.from_access_token(access_token)
+    session['current_user_id']  = @current_user.id
   end 
   
 end

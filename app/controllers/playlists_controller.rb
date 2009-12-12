@@ -4,18 +4,8 @@ require 'nokogiri'
 class PlaylistsController < ApplicationController
   def index
     if logged_in?
-      xml = current_user.real_access_token.get('/xspf/index').body
-      doc = Nokogiri::XML(xml)
-      
-      playlists = Hash.from_xml(current_user.real_access_token.get('/xspf/index').body)['playlistList']['playlist'].map do |playlist|
-
-        playlist['provider_id'] = 1
-        playlist['location'] = playlist_remote_view_path(:location => playlist['location'])
-                
-        playlist
-      end
-      playlists = playlists + Playlist.find(:all, :conditions => ['user_id = ?',current_user.id]).map(&:to_jspf)
-      render :json => { :playlists => playlists }
+      #playlists = playlists + Playlist.find(:all, :conditions => ['user_id = ?',current_user.id]).map(&:to_jspf)
+      render :json => { :playlists => current_user.playlists.map(&:to_jspf) }
     else
       playlists = [ Playlist.new(:location => 'http://sandbox-soundcloud.com/xspf?url=http://sandbox-soundcloud.com/forss/sets/soulhack') ] 
       playlists = playlists.map(&:to_jspf)
@@ -36,7 +26,9 @@ class PlaylistsController < ApplicationController
       access_token = nil
     end
     #playlist = Playlist.new(:location => params[:location], :access_token => access_token)
-    playlist = Playlist.find_or_create_by_location(:location => params[:location], :access_token => access_token)
+    playlist = Playlist.find_or_create_by_location(:location => params[:location], :access_token => access_token, :user => current_user)
+    playlist_listing = PlaylistListing.find_or_create_by_user_id_and_playlist_id(:playlist_id => playlist.id, :user_id => current_user.id)
+    
     render :json => playlist.to_jspf
   end
   
@@ -48,6 +40,9 @@ class PlaylistsController < ApplicationController
       # a remote playlist
       Playlist.create(:location => params[:location], :user_id => current_user.id)
     end
+
+    playlist_listing = PlaylistListing.find_or_create_by_user_id_and_playlist_id(:playlist_id => playlist.id, :user_id => current_user.id)
+    
     render :json => playlist.to_jspf
   end
   
