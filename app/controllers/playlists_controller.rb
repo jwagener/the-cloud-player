@@ -4,15 +4,19 @@ require 'nokogiri'
 class PlaylistsController < ApplicationController
   def index
     if logged_in?
-      xml = current_user.real_access_token.get('/xspf/index').body
-      doc = Nokogiri::XML(xml)
-      
-      playlists = Hash.from_xml(current_user.real_access_token.get('/xspf/index').body)['playlistList']['playlist'].map do |playlist|
-
-        playlist['provider_id'] = 1
-        playlist['location'] = playlist_remote_view_path(:location => playlist['location'])
-                
-        playlist
+      playlists = []
+      current_user.access_tokens.each do |access_token|
+        xml = access_token.get('/xspf/index').body
+        doc = Nokogiri::XML(xml)
+        
+        playlists = playlists + Hash.from_xml(access_token.get('/xspf/index').body)['playlistList']['playlist'].map do |playlist|
+        
+          playlist['provider_id'] = 1
+          playlist['location'] = playlist_remote_view_path(:location => playlist['location'])
+                  
+          playlist
+        end
+        
       end
       playlists = playlists + Playlist.find(:all, :conditions => ['user_id = ?',current_user.id]).map(&:to_jspf)
       render :json => { :playlists => playlists }

@@ -2,8 +2,7 @@ require 'soundcloud'
 
 class AccessToken < ActiveRecord::Base
   belongs_to :provider
-  belongs_to :access_token
-  has_many :access_tokens
+  belongs_to :user
   
   def self.from_access_token(access_token)
     soundcloud_client = Soundcloud.register({:access_token => access_token, :site => $settings[:soundcloud_consumer][:site]})
@@ -21,9 +20,13 @@ class AccessToken < ActiveRecord::Base
   end
   
   
+  # delegate shit to real_access_token
+  def method_missing(method, *args)
+    real_access_token.send(method, *args)
+  end
+
   def real_access_token
     OAuth::AccessToken.new($soundcloud_consumer, key, secret)
-    
   end
   
   def client
