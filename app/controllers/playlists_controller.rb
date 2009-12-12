@@ -3,14 +3,12 @@ require 'nokogiri'
 
 class PlaylistsController < ApplicationController
   def index
-    if logged_in?
-      #playlists = playlists + Playlist.find(:all, :conditions => ['user_id = ?',current_user.id]).map(&:to_jspf)
-      render :json => { :playlists => current_user.playlists.map(&:to_jspf) }
+    playlists = if logged_in?
+      current_user.playlists
     else
-      playlists = [ Playlist.new(:location => 'http://sandbox-soundcloud.com/xspf?url=http://sandbox-soundcloud.com/forss/sets/soulhack') ] 
-      playlists = playlists.map(&:to_jspf)
-      render :json => { :playlists => playlists }
+      [ Playlist.new(:location => 'http://sandbox-soundcloud.com/xspf?url=http://sandbox-soundcloud.com/forss/sets/soulhack').to_jspf ]
     end
+    render :json => {:playlists => playlists.map(&:to_jspf)}
   end
     
   def view 
