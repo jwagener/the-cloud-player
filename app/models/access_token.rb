@@ -9,10 +9,7 @@ class AccessToken < ActiveRecord::Base
   def get_xspf_playlists
     Hash.from_xml(get('/xspf/index').body)['playlistList']['playlist'].each do |playlist_hash|      
       playlist = Playlist.find_or_create_by_location(:location => playlist_hash['location'])
-      p "Find Or Create by"
-      p playlist
       playlist_listing = PlaylistListing.find_or_create_by_user_id_and_playlist_id(:user_id => user.id, :playlist_id => playlist.id)
-      p playlist_listing
     end
   end
   

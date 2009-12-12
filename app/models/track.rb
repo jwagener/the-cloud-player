@@ -21,6 +21,7 @@ class Track < ActiveRecord::Base
   def to_jspf
     {
       :creator => creator,
+      :provider_id => provider_id,
       :title   => title,
       :duration => 3333,
       :location => location,
