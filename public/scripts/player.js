@@ -1104,7 +1104,13 @@ $(function() {
     };
 
     $('.connect-to-soundcloud').each(function(button){
-      SC.Connect.prepareButton(this,options); 
+      //SC.Connect.prepareButton(this,options); 
+      $(button).click(function(){
+        var openid_url = prompt('Your OpenID identity URL:');
+        if(openid_url && openid_url != ""){
+          $('input#openid_url').val(openid_url).parent().submit();
+        }        
+      });
     });
 
   }

@@ -67,10 +67,10 @@
         <!-- TODO jw <a href="" id="about">About</a> |  -->
         
         <div class="login">
-          <a href="#" class="connect-to-soundcloud">Sign in with your SoundCloud Account</a>        
+          <% form_tag(session_url) do %><%= text_field_tag "openid_url", "http://your.openid.org", :style => "display: inline;"  %><% end %>
         </div>
         <div class="logout">
-         Hej <span class="current-user-name"><%= @current_user.username if @current_user %></span>
+         Hej <span class="current-user-name"><%= @current_user.identity_url if @current_user %></span>
          | <a href="#" id="providers">Providers</a>
          | <a href="/soundcloud-connect/logout" class="do-logout">Logout</a>
         </div>
