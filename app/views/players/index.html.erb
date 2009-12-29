@@ -30,7 +30,10 @@
   	<meta name="author" content="Eric Wahlforss"/>
     <link href="/stylesheets/player.css" media="screen" rel="stylesheet" type="text/css" />
     <link href="/images/favicon.ico" rel="shortcut icon" />
-    
+    <% if @selected_playlist %>
+      <link type="application/xspf+xml" rel="alternate" 
+        href="<%= playlist_view_url(@selected_playlist, :format => :xspf)%>"/>
+    <% end %>
     <script type='text/javascript'>
       <%= "var TCP_GLOBALS = #{javascript_globals.to_json};"%>
     </script>
@@ -77,7 +80,7 @@
       </div>
       
       
-      <img id="logo" src="images/logo.png" />
+      <img id="logo" src="/images/logo.png" />
       <input accesskey="f" maxlength="50" type="search" name="q" id="q" value="Search Artists &amp; Tracks" />
     </div>
 

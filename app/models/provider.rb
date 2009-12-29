@@ -28,56 +28,16 @@ class Provider < ActiveRecord::Base
   def discover_capabilities
     # TODO isolate each discovery part from each other exception wise
     # parse /.well_known/
-
-
-    initiate_link  = get_xrd_link_for(XRD_REL[:oauth_core_initiate])
-    token_link     = get_xrd_link_for(XRD_REL[:oauth_core_token])
-    authorize_link = get_xrd_link_for(XRD_REL[:oauth_core_authorize])
-    
-    if initiate_link && token_link && authorize_link
-      self.supports_oauth = true
-      self.request_token_path = initiate_link.attributes['href'].value
-      self.access_token_path = token_link.attributes['href'].value
-    
-      discovery_link = get_xrd_link_for(XRD_REL[:oauth_discovery_static_consumer])
-      if discovery_link
-        self.supports_oauth_static_consumer = true
-        self.consumer_token = discovery_link.attributes['localid'].value
-        self.consumer_secret = ""
-      end
-    end
-    
-    xspf_discovery_link = get_xrd_link_for(XRD_REL[:xspf_discovery])
-    if xspf_discovery_link
-      self.supports_xspf_discovery = true
-      self.xspf_discovery_path   = xspf_discovery_link.attributes['href'].value
-    end
-    
-    
-    opensearch_link = get_xrd_link_for(XRD_REL[:opensearch])
-    if opensearch_link
-      opensearch_xml = Nokogiri::XML(open(opensearch_link.attributes['href'].value))
-
-      opensearch_urls = opensearch_xml.xpath("//xrd:Url[@type='application/xspf+xml']", 'xrd' => XML_NS[:opensearch])
-      if opensearch_urls.length > 0 
-        self.supports_xspf_opensearch        = true
-        self.xspf_opensearch_query_template  = opensearch_urls.first.attributes['template'].value
-      end
-    end
-    
-    self
-    # check oauth discovery
+    discover_oauth 
+    discover_xspf_discovery
+    discover_xspf_opensearch
   rescue SocketError, OpenURI::HTTPError
     p 'Error'
-    # discovery not supported
   end
   
-  #def self.find_or_create_by_host(*args)
   def self.from_host(host)
     provider = find_or_create_by_host(:host => host)
-    # do cool stuff like getting a nice favicon!
-    # try todo oauth discover 
-  
+    # do cool stuff like getting a nice favicon!  
     provider
   end
 
@@ -85,7 +45,6 @@ class Provider < ActiveRecord::Base
     src = read_attribute(:icon_src)
     src.blank? ? "http://#{host}/favicon.ico" : src
   end
-  
   
 private
   
@@ -97,8 +56,54 @@ private
   
   def get_xrd_link_for(service)
     link = xrd.xpath("//xrd:Link[@rel='#{service}']", 'xrd' => XML_NS[:xrd])
-    
     link.length > 0 ? link.first : nil
   end
 
+  def discover_oauth
+   initiate_link  = get_xrd_link_for(XRD_REL[:oauth_core_initiate])
+    token_link     = get_xrd_link_for(XRD_REL[:oauth_core_token])
+    authorize_link = get_xrd_link_for(XRD_REL[:oauth_core_authorize])
+    
+    if initiate_link && token_link && authorize_link
+      self.supports_oauth = true
+      self.request_token_path = initiate_link.attributes['href'].value
+      self.access_token_path = token_link.attributes['href'].value
+    
+      discover_oauth_static_consumer
+    end
+    self.supports_oauth
+  end
+
+  def discover_oauth_static_consumer
+    discovery_link = get_xrd_link_for(XRD_REL[:oauth_discovery_static_consumer])
+    if discovery_link
+      self.supports_oauth_static_consumer = true
+      self.consumer_token = discovery_link.attributes['localid'].value
+      self.consumer_secret = ""
+    end
+    self.supports_oauth_static_consumer
+  end
+  
+  def discover_xspf_discovery
+    xspf_discovery_link = get_xrd_link_for(XRD_REL[:xspf_discovery])
+    if xspf_discovery_link
+      self.supports_xspf_discovery = true
+      self.xspf_discovery_path   = xspf_discovery_link.attributes['href'].value
+    end
+    self.supports_xspf_discovery
+  end
+    
+  def discover_xspf_opensearch
+    opensearch_link = get_xrd_link_for(XRD_REL[:opensearch])
+    if opensearch_link
+      opensearch_xml = Nokogiri::XML(open(opensearch_link.attributes['href'].value))
+
+      opensearch_urls = opensearch_xml.xpath("//xrd:Url[@type='application/xspf+xml']", 'xrd' => XML_NS[:opensearch])
+      if opensearch_urls.length > 0 
+        self.supports_xspf_opensearch        = true
+        self.xspf_opensearch_query_template  = opensearch_urls.first.attributes['template'].value
+      end
+    end
+    self.supports_xspf_opensearch
+  end
 end

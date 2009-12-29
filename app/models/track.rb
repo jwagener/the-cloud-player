@@ -1,6 +1,6 @@
 class Track < ActiveRecord::Base
   has_many :listings
-  has_one :provider
+  belongs_to :provider
   # TODO has_many playlists
   
   def self.from_hash(track_hash, provider_id)
