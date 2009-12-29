@@ -42,41 +42,205 @@ $(function() {
     randomPlaylist = 0;
   }
 
-  // GUI events
+  if(randomPlaylist) {
+    $("#rand").addClass("on");
+  }
+
+  // read loop mode from cookie
+  if(!loopPlaylist) {
+    loopPlaylist = 0;
+  }
+
+  if(loopPlaylist) {
+    $("#loop").addClass("on");
+  }
+
+  // GUI LISTENERS
+
+  // click behaviour for transport buttons
+  $("#play,#prev,#next,#rand,#loop,#add-playlist,#add-smart-playlist,#add-xspf-playlist").mousedown(function() {
+    $(this).addClass("click");
+  }).mouseup(function() {
+    $(this).removeClass("click");
+  });
+
+  // play button
   $('#play').click(function() {
     $(document).trigger("onTogglePlay");
   });
 
+  // open about box
+  $("a#about").click(function(ev) {
+    $("#about-box").fadeIn();
+    ev.preventDefault();
+  });
+
+  // close about box
   $("#about-box a.close").click(function(ev) {
     $("#about-box").fadeOut();
     ev.preventDefault();
   });
 
-  $("a#about").click(function(ev) {
-    $("#about-box").fadeIn();
-    ev.preventDefault();
-  });
-  
-  if(randomPlaylist) {
-    $("#rand").addClass("on");
-  }
+  // random button
   $("#rand").click(function() {
     $(this).toggleClass("on");
     randomPlaylist = ($(this).hasClass("on") ? 1 : 0);
     $.cookie('random_playlist', randomPlaylist);
   });
 
-  // read loop mode from cookie
-  if(!loopPlaylist) {
-    loopPlaylist = 0;
-  }
-  if(loopPlaylist) {
-    $("#loop").addClass("on");
-  }
+  // loop button
   $("#loop").click(function() {
     $(this).toggleClass("on");
     loopPlaylist = ($(this).hasClass("on") ? 1 : 0);
     $.cookie('loop_playlist', loopPlaylist);
+  });
+
+  // volume
+  $("#volume").slider({
+    value : volume,
+    min : 0,
+    max : 100,
+    slide : function(e, ui) {
+      if(audio) {
+        volume = ui.value;
+        audio.setVolume(volume);
+      }
+    },
+    change : function(e, ui) {
+      $.cookie('volume',ui.value); // save the volume in a cookie
+    }
+  });
+
+  // next track
+  $('#next').click(function() {
+    if($("body").hasClass("playing")) {
+      playNext($("tr.playing"));
+    }
+  });
+
+  // prev track
+  $('#prev').click(function() {
+    if($("body").hasClass("playing")) {
+      playPrev($("tr.playing"));
+    }
+  });
+
+  // artwork loading callback
+  $("#artwork img, #artist-info img").load(function() {
+    $(this).addClass("loaded");
+  });
+
+  // track scrubbing
+  $("#progress").click(function(ev) {
+    var percent = (ev.clientX-$("#progress").offset().left)/($("#progress").width());
+    if(audio.durationEstimate*percent < audio.duration) {
+      audio.setPosition(audio.durationEstimate*percent);        
+    }
+  });
+
+  // search
+  $("#q")
+    .focus(function() {
+      this.focused = true;
+      $(this).val('');
+      $(window).click(function(ev) {
+        // if(ev.target != self) {
+        //   $("#q").blur();
+        //   $(window).unbind("click");
+        // }
+      });
+    })
+    .blur(function() {
+      this.focused = false;
+      $(this).val('Search Artists & Tracks');
+    })
+    .keydown(function(ev) {
+      if(ev.keyCode === 13) {
+        removePlaylist("search1");
+        var q = $("#q").val();
+
+        playlists["search1"] = new SC.Playlist({
+          is_owner: true,
+          playlist: {
+            id : "search1",
+            name : "Search for '" + q + "'",
+            version : 0,
+            dontPersist : true,
+            search : true,
+            smart : true,
+            smart_filter : {
+              search_term : q,
+              order: "hotness",
+              hotness_from : "2007-01-01"
+            }
+          }
+        });
+        switchPlaylist("search1");
+      } else if (ev.keyCode === 27) {
+        $("#q").blur();
+      }
+    });
+
+  // list of playlists
+  $("#playlists").sortable({
+    placeholder : "droppable-placeholder",
+    helper : function(e,el) {
+      return el.clone(); // ghosted drag helper
+    },
+    opacity: 0.7,
+    delay: 30,
+    start : function(e,ui) {
+      ui.item.css("display","block"); //prevent dragged element from getting hidden
+    },
+    stop : function(e,ui) {
+      if(!ui.item.hasClass("dont-persist")) { // save if playlist is persisted
+        playlists[ui.item.attr('listid')].savePosition();          
+      }
+    }
+  });
+
+  // add playlist button
+  $("#add-playlist").click(function(ev) {
+    if($("body").hasClass("logged-in")) {
+      var pos = $("#playlists li:not(.dont-persist)").index($("#playlists li:not(.dont-persist):last"))+1; //FIXME respect non-persisted playlists, and first
+      $.post("/playlists",{'title':"Untitled playlist",'position': pos},function(pl) {
+        initPlaylist(pl);
+        $(document).trigger("onPlaylistSwitch", pl);
+        //$("#playlists li:last a:first").click();
+      },"json");
+      ev.preventDefault();
+    }
+  });
+
+  // add xspf playlist button
+  $("#add-xspf-playlist").click(function(ev) {
+    $("#add-xspf-playlist > div:first")
+      .clone()
+      .find("a.close").click(function() {
+        $(this).parents("div.add-xspf-playlist").fadeOut(function() {
+          $(this).remove();
+        });
+        return false;
+      }).end()
+      .find("input:first").val("").end()
+      .find("input:last").click(function() {
+        $.post("/playlists",{location:$(this).parents("div.add-xspf-playlist").find("input:first").val()},function(pl) {
+          pl.tracks = []; // reset tracks
+          initPlaylist(pl);
+          $(document).trigger("onPlaylistSwitch",pl);
+        },"json");
+
+        $(this).parents("div.add-xspf-playlist").fadeOut(function() {
+          $(this).remove();
+        });
+
+        return false;
+      }).end()
+      .appendTo("body")
+      .fadeIn(function() {
+        $(".add-xspf-playlist input").focus().select();
+      });
+    ev.preventDefault();
   });
 
   // resizable playlists pane
@@ -96,17 +260,18 @@ $(function() {
     .bind("onPlaylistSelectionChange",function(e,data) {
       if(data.shiftKey) {
         if($(e.target).siblings(".selected").length > 0) {
-          var oldIdx = $("tr",list).index($(e.target).siblings(".selected")[0]);
-          var newIdx = $("tr",list).index(e.target);
+          var $list = $("div[listid=" + selectedPlaylist.identifier + "]");
+          var oldIdx = $("tr",$list).index($(e.target).siblings(".selected")[0]);
+          var newIdx = $("tr",$list).index(e.target);
           var start = (oldIdx - newIdx < 0 ? oldIdx : newIdx);
           var stop = (oldIdx - newIdx < 0 ? newIdx : oldIdx);
           for(var i = start;i <= stop;i++) {
-            $("tr",list).eq(i).addClass("selected");              
+            $("tr",$list).eq(i).addClass("selected");              
           }
         }
-      } else if (data.metaKey) {
+      } else if (data.metaKey) { // cmd key pressed, multi select
         $(e.target).toggleClass("selected");
-      } else {
+      } else { // no modifier key, remove other selections
         $(e.target).siblings().removeClass("selected").end().toggleClass("selected");          
       }
     })
@@ -127,15 +292,23 @@ $(function() {
       savePlaylist(pl);
 
     })
-    .bind("onLoadTrack",function(e,track) { // load a track into the player
-      var id = track.location.substring(track.location.lastIndexOf("/")+1);
+    .bind("onLoadTrack",function(e,tr) { // load a track into the player
+      
+      var track = $(tr).data("track");
+      
+      // hilite currently playing track
+      $("tr.playing").removeClass("playing selected");
+      $(tr).addClass("playing");
+      
+
       $loading.css('width',"0%");
       $progress.css('width',"0%");
       $("#player-display img.logo").fadeOut('slow');
       $("#progress").fadeIn('slow');
 
-      audioTracks[id] = soundManager.createSound({
-        id: id,
+      var sndId = Math.random()*1000000; // generate a unique snd id
+      audioTracks[sndId] = soundManager.createSound({
+        id: sndId,
         url: track.location,
         volume : volume,
         whileloading : SC.throttle(200,function() {
@@ -148,7 +321,7 @@ $(function() {
         }),
         onfinish : function() {
           $("body").removeClass("playing");
-          currentPlaylist.next();        
+          playNext($(tr));
         },
         onload : function () {
           $loading.css('width',"100%");
@@ -159,7 +332,7 @@ $(function() {
         audio.stop();
       }
       audio = null;
-      audio = audioTracks[id]; // set current audio to the audio in the audioTracks hash
+      audio = audioTracks[sndId]; // set current audio to the audio in the audioTracks hash
       if(audio.loaded) {
         $loading.css('width',"100%");
       }
@@ -207,7 +380,6 @@ $(function() {
       }
     })
     .bind("onPlaylistSwitch",function(e,pl) { // change order of a playlist
-      console.log('switched playlist');
       
       $("#lists > div").hide();
       $("#lists > div[listid="+pl.identifier+"]").show();
@@ -216,49 +388,55 @@ $(function() {
       selectedPlaylist = pl;
       
     })
-    .bind("onTrackAdd",function(e,track, pl, save) {
-
-      pl.tracks.push(track);
+    .bind("onTracksAdded",function(e,trackList, pl, save) { // add a collection of tracks to a playlist
 
       var list = $("#lists > div[listid="+pl.identifier+"] tbody");
-      // sanitization for display
-      track.description = (track.description ? track.description.replace(/(<([^>]+)>)/ig,"") : "");
 
-      if (track.bpm == null) {
-        track.bpm = "";
-      }
-      if (track.creator == null) {
-        track.creator = "Unknown";
-      }
-      if (track.title == null) {
-        track.title = "Untitled";
-      }
-      if (track.duration == null) {
-        track.duration = 0;
-      }
-      if (track.provider_id == null) {
-        track.provider_id = 0;
-      }
-      if(!track.genre) {
-        track.genre = "";
-      }
-      //populate table
-      $('#playlist-row table tr')
-        .clone()
-        .css("width",SC.arraySum(colWidths)+7*7)
-        .find("td:nth-child(1)").css("width",colWidths[0]).end()
-        .find("td:nth-child(2)").css("width",colWidths[1]).text(track.title).end()
-        .find("td:nth-child(3)").css("width",colWidths[2]).html(track.creator).end()
-        .find("td:nth-child(4)").css("width",colWidths[3]).text(SC.formatMs(track.duration)).end()
-        .find("td:nth-child(5)").css("width",colWidths[4]).html("<img src='" + (TCP_GLOBALS.providers[track.provider_id+""] ? TCP_GLOBALS.providers[track.provider_id+""].icon_src : "") + "' />").end()
-        .find("td:nth-child(6)").css("width",colWidths[5]).text(track.bpm).end()
-        .find("td:nth-child(7)").css("width",colWidths[6]).html("<a href='#" + track.genre.replace(/\s/, "+") + "'>" + track.genre + "</a>")
-        .end()
-        .appendTo(list);
-      $("tr:last",list).data("track",track);
+      $.each(trackList,function() {
+        tracks[this.identifier] = this;
+                
+        pl.tracks.push(this);
+
+        // sanitization for display
+        this.description = (this.description ? this.description.replace(/(<([^>]+)>)/ig,"") : "");
+
+        if (this.bpm == null) {
+          this.bpm = "";
+        }
+        if (this.creator == null) {
+          this.creator = "Unknown";
+        }
+        if (this.title == null) {
+          this.title = "Untitled";
+        }
+        if (this.duration == null) {
+          this.duration = 0;
+        }
+        if (this.provider_id == null) {
+          this.provider_id = 0;
+        }
+        if(!this.genre) {
+          this.genre = "";
+        }
+        //populate table
+        $('#playlist-row table tr')
+          .clone()
+          .css("width",SC.arraySum(colWidths)+7*7)
+          .find("td:nth-child(1)").css("width",colWidths[0]).end()
+          .find("td:nth-child(2)").css("width",colWidths[1]).text(this.title).end()
+          .find("td:nth-child(3)").css("width",colWidths[2]).html(this.creator).end()
+          .find("td:nth-child(4)").css("width",colWidths[3]).text(SC.formatMs(this.duration)).end()
+          .find("td:nth-child(5)").css("width",colWidths[4]).html("<img src='" + (TCP_GLOBALS.providers[this.provider_id+""] ? TCP_GLOBALS.providers[this.provider_id+""].icon_src : "") + "' />").end()
+          .find("td:nth-child(6)").css("width",colWidths[5]).text(this.bpm).end()
+          .find("td:nth-child(7)").css("width",colWidths[6]).html("<a href='#" + this.genre.replace(/\s/, "+") + "'>" + this.genre + "</a>")
+          .end()
+          .appendTo(list);
+        $("tr:last",list).data("track",this);
+
+      });
 
       if(save) {
-        savePlaylist(pl);        
+        savePlaylist(pl);   
       }
 
     })
@@ -268,14 +446,17 @@ $(function() {
       justDropped = true;  // ugly, but I can't find a proper callback;
 
       if(ui.draggable.siblings(".selected").length > 0) { //multi-drag
-        var items = ui.draggable.parents("tbody").find("tr.selected");
-        $.each(items,function() {
-          $(document).trigger("onTrackAdd",[$(this).data("track"),pl,true]);
+
+        var tracks = $.map(ui.draggable.parents("tbody").find("tr.selected"), function(el, index){
+          return $(el).data("track");
         });
-         flash(items.length + " tracks were added to the playlist");
+
+        $(document).trigger("onTracksAdded",[tracks,pl,true]);
+
+        //flash(tracks.length + " tracks were added to the playlist");
       } else {
-        $(document).trigger("onTrackAdd",[$(ui.draggable).data("track"),pl,true]);
-        flash("The track " + $(ui.draggable).data("track").title + " was added to the playlist");           
+        $(document).trigger("onTracksAdded",[[$(ui.draggable).data("track")],pl,true]);
+        //flash("The track " + $(ui.draggable).data("track").title + " was added to the playlist");           
       }
 
     });
@@ -325,155 +506,17 @@ $(function() {
       $.cookie('playlist_pane_width',$(this).width());
     });
 
-  // volume
-  $("#volume").slider({
-    value : volume,
-    min : 0,
-    max : 100,
-    slide : function(e, ui) {
-      if(audio) {
-        volume = ui.value;
-        audio.setVolume(volume);
-      }
-    },
-    change : function(e, ui) {
-      $.cookie('volume',ui.value); // save the volume in a cookie
-    }
-  });
-
-  $('#next').click(function() {
-    currentPlaylist.next();
-  });
-
-  $('#prev').click(function() {
-    currentPlaylist.prev();
-  });
-
-  // artist info close btn
-  $("#artist-info a.close").click(function(ev) {
-    hideArtistPane();
-    ev.preventDefault();
-  });
-
-  // artwork loading callback
-  $("#artwork img, #artist-info img").load(function() {
-    $(this).addClass("loaded");
-  });
-
-  $("#progress").click(function(ev) {
-    var percent = (ev.clientX-$("#progress").offset().left)/($("#progress").width());
-    if(audio.durationEstimate*percent < audio.duration) {
-      audio.setPosition(audio.durationEstimate*percent);        
-    }
-  });
-
-  $("#q")
-    .focus(function() {
-      this.focused = true;
-      $(this).val('');
-      $(window).click(function(ev) {
-        // if(ev.target != self) {
-        //   $("#q").blur();
-        //   $(window).unbind("click");
-        // }
-      });
-    })
-    .blur(function() {
-      this.focused = false;
-      $(this).val('Search Artists & Tracks');
-    })
-    .keydown(function(ev) {
-      if(ev.keyCode === 13) {
-        removePlaylist("search1");
-        var q = $("#q").val();
-
-        playlists["search1"] = new SC.Playlist({
-          is_owner: true,
-          playlist: {
-            id : "search1",
-            name : "Search for '" + q + "'",
-            version : 0,
-            dontPersist : true,
-            search : true,
-            smart : true,
-            smart_filter : {
-              search_term : q,
-              order: "hotness",
-              hotness_from : "2007-01-01"
-            }
-          }
-        });
-        switchPlaylist("search1");
-      } else if (ev.keyCode === 27) {
-        $("#q").blur();
-      }
-    });
-
-  // add playlist button
-  $("#add-playlist").click(function(ev) {
-    if($("body").hasClass("logged-in")) {
-      var pos = $("#playlists li:not(.dont-persist)").index($("#playlists li:not(.dont-persist):last"))+1; //FIXME respect non-persisted playlists, and first
-      $.post("/playlists",{'title':"Untitled playlist",'position': pos},function(playlist) {
-        initPlaylist(playlist);
-        $(document).trigger("onPlaylistSwitch", playlist);
-        //$("#playlists li:last a:first").click();
-      },"json");
-      ev.preventDefault();
-    }
-  });
-
-  // smart playlists button
-  $("#add-smart-playlist").click(function(ev) {
-    if($("body").hasClass("logged-in")) {
-      $("#lists").animate({top:135});
-      $("#artist-info").animate({height:"hide"});
-      $("#create-smart-playlist").animate({height:"show"},function() {
-        setTimeout(function() { // ui.slider bug so have to delay execution here 1ms
-          $("#pl-bpm-range-slider").slider("moveTo",250,1);
-          $("#pl-bpm-range-slider").slider("moveTo",0,0);
-        },10);
-        $("#pl-genre,#pl-artist,#pl-favorite,#pl-search-term").val("")
-        $("#pl-genre").focus();
-      });
-      ev.preventDefault();
-    }
-  });
-
-  // add xspf playlist button
-  $("#add-xspf-playlist").click(function(ev) {
-    $("#add-xspf-playlist > div:first")
-      .clone()
-      .find("a.close").click(function() {
-        $(this).parents("div.add-xspf-playlist").fadeOut(function() {
-          $(this).remove();
-        });
-        return false;
-      }).end()
-      .find("input:first").val("").end()
-      .find("input:last").click(function() {
-        $.post("/playlists",{location:$(this).parents("div.add-xspf-playlist").find("input:first").val()},function(data) {
-          initPlaylist(data);
-          $(document).trigger("onPlaylistSwitch",data);
-        },"json");
-
-        $(this).parents("div.add-xspf-playlist").fadeOut(function() {
-          $(this).remove();
-        });
-
-        return false;
-      }).end()
-      .appendTo("body")
-      .fadeIn(function() {
-        $(".add-xspf-playlist input").focus().select();
-      });
-    ev.preventDefault();
-  });
-
   // main keyboard listener
-  $(window).keydown(function(ev) {
+  
+  $(document).keydown(function(ev) {
+    if (ev.keyCode === 32) { // start/stop play
+      $(document).trigger("onTogglePlay");
+    }
+  });  
+  $(document).bind(($.browser.mozilla ? 'keypress' : 'keydown'), function(ev) {
+    var $list = $("div[listid=" + selectedPlaylist.identifier + "]");
     if(!$("#q")[0].focused && !window.editingText) { // don't listen to key events if search field is focused or if editing text
       if(ev.keyCode === 8) { // delete selected tracks
-        var $list = $("div[listid=" + selectedPlaylist.identifier + "]");
         if($("tr.selected",$list).length > 0) {
 //          if(selectedPlaylist.editable) {
             var $selListItem = $("tr.selected:first",$list).prev("tr"); // select prev track when removing
@@ -484,73 +527,69 @@ $(function() {
               $("tr:first",$list).addClass("selected");
             }
             
-            console.log('before',selectedPlaylist.tracks)
-
             // update tracks model
             selectedPlaylist.tracks = $.map($list.find("tr:not(.droppable-placeholder)"), function(el, index){
               return $(el).data("track");
             });
-            
-            console.log('after',selectedPlaylist.tracks)
-            
+
             savePlaylist(selectedPlaylist);
 //          }
           return false;
         }
-      } else if(ev.keyCode === 32) { // start/stop play
-        $(document).trigger("onTogglePlay");
-      } else if (ev.keyCode === 13 && !smartPlaylistFormFocus) { // start selected track, don't trigger if focus on smart playlist create form
-        if($("tr.selected",selectedPlaylist.list).length > 0) {
-          var idx = $("tr", selectedPlaylist.list).index($("tr.selected",selectedPlaylist.list));            
-          selectedPlaylist.loadTrack(idx);
-        } else if ($("tr",selectedPlaylist.list).length > 0) {
-          $("tr", selectedPlaylist.list).eq(0).addClass("selected");
-          var idx = 0;
-          selectedPlaylist.loadTrack(idx);
+      } else if (ev.keyCode === 13) { // start selected track
+        if($("tr.selected",$list).length > 0) {
+          $(document).trigger("onLoadTrack",$("tr.selected:first",$list));
+        } else if ($("tr",$list).length > 0) {
+          $("tr", $list).eq(0).addClass("selected");
+          $(document).trigger("onLoadTrack",$("tr.selected:first",$list));          
         }
       } else if (ev.keyCode === 40) { // arrow down, select next
-        var sel = $("tr.selected:last",selectedPlaylist.list);
+
+        var sel = $("tr.selected:last",$list);
+
         if(sel.length > 0 && sel.next().length > 0) { // check so that el exists
 
           // a bit messy code that scrolls with the selected element
-          if(sel.next().offset().top > (($("> div:last",selectedPlaylist.dom).height()+$("> div:last",selectedPlaylist.dom).offset().top) - 19) ) {
-            $("> div:last",selectedPlaylist.dom)[0].scrollTop += 19;
+          if(sel.next().offset().top > (($("> div:last",$list).height()+$("> div:last",$list).offset().top) - 19) ) {
+            $("> div:last",$list)[0].scrollTop += 19;
           }
 
           if(ev.shiftKey) { // select next track
-            $("tr.selected",selectedPlaylist.list).next().addClass("selected");
+            $("tr.selected",$list).next().addClass("selected");
           } else {
-            $("tr", selectedPlaylist.list).removeClass("selected");
+            $("tr", $list).removeClass("selected");
             sel.next().addClass("selected");
           }
         }
         return false;
       } else if (ev.keyCode === 38) { // arrow up, select prev
-        var sel = $("tr.selected:first",selectedPlaylist.list);
+
+        var sel = $("tr.selected:first",$list);
+        
         if(sel.length > 0 && sel.prev().length > 0) { // check so that el exists
 
           // a bit messy code that scrolls with the selected element
-          if(sel.prev().offset().top < ($("> div:last",selectedPlaylist.dom).offset().top) ) {
-            $("> div:last",selectedPlaylist.dom)[0].scrollTop -= 19;
+          if(sel.prev().offset().top < ($("> div:last",$list).offset().top) ) {
+            $("> div:last",$list)[0].scrollTop -= 19;
           }
 
           if(ev.shiftKey) { // select prev track
-            $("tr.selected",selectedPlaylist.list).prev().addClass("selected");
+            $("tr.selected",$list).prev().addClass("selected");
           } else {
-            $("tr", selectedPlaylist.list).removeClass("selected");
+            $("tr", $list).removeClass("selected");
             sel.prev().addClass("selected");
           }
         }
         return false;
       } else if (ev.keyCode === 39 && $("body").hasClass("playing")) { // arrow next, play next if playing
-        selectedPlaylist.next();
+        playNext($("tr.playing:first",$list));
       } else if (ev.keyCode === 37 && $("body").hasClass("playing")) { // arrow prev, play prev if playing
-        selectedPlaylist.prev();
+        playPrev($("tr.playing:first",$list));
       } else if (ev.keyCode === 70 && ev.metaKey) { // cmd-f for search
         $("#q").focus();
         return false;
       } else if (ev.keyCode === 65 && ev.metaKey) { // cmd-a for select all
-        $("tr",selectedPlaylist.list).addClass("selected");
+        $("tr",$list).addClass("selected");
         return false;
       }
     } else {
@@ -560,16 +599,10 @@ $(function() {
     }
   });
 
-  // click behaviour for transport buttons
-  $("#play,#prev,#next,#rand,#loop,#add-playlist,#add-smart-playlist,#add-xspf-playlist").mousedown(function() {
-    $(this).addClass("click");
-  }).mouseup(function() {
-    $(this).removeClass("click");
-  });
+  // add the tab for the playlist
+  function initPlaylist(pl) {
 
-  function initPlaylist(pl) { // add the tab for the playlist
-
-    playlists[pl.identifier + ""] = pl;
+    playlists[pl.identifier] = pl; // test: memory usage
 
     var limit = 40, // limit of ajax requests
         offset = 0, // the offset when getting more tracks through the rest interface
@@ -592,25 +625,16 @@ $(function() {
 
     var dom = $("#lists > div:last"); // a bit ugly
 
-    var list = $("tbody", dom);
+    var $list = $("tbody", dom);
 
     // Playlist item events
     $("div[listid=" + pl.identifier + "] tr")
       .live("dblclick", function(e) {
-  //        currentPlaylist = self;
-          // find out at which position we are at in the playlist, and store that as the currentPos
-  //        pl.currentPos = $(this).parents("tbody").find("tr").index(this);
-        loadTrack($(e.target).parents("tr"));
+        $(e.target).parents("tr").addClass("selected");
+        $(document).trigger("onLoadTrack",$(e.target).parents("tr"));
       })
       .live("click",function(e) {
-        // hopefully tmp code to workaround event issues
-        var data = {};
-        if(e.shiftKey) {
-          data.shiftKey = e.shiftKey;
-        } else if (e.metaKey) {
-          data.metaKey = e.metaKey;
-        }
-        $(this).trigger("onPlaylistSelectionChange",data);
+        $(this).trigger("onPlaylistSelectionChange",e);
       });
 
     // load colWidths from cookies
@@ -652,7 +676,7 @@ $(function() {
         var colIdx = $(this).parents("thead").find("th").index(this) + 1;
         var rowWidth = $(this).parents("tr").width();
         var $row = $(this).parents("tr");
-        var $rows = $("tr",list);
+        var $rows = $("tr",$list);
 
         if(withinHeaderDragArea(this,e)) {
           $(document)
@@ -663,7 +687,7 @@ $(function() {
               var colWidth = ev.clientX - $col.offset().left;
               $col.width(colWidth);
               // resize all the cells in the same col
-              $("td:nth-child(" + colIdx + ")", list).width(colWidth);
+              $("td:nth-child(" + colIdx + ")", $list).width(colWidth);
               $row.width(rowWidth+(colWidth-oldColWidth));
               $rows.width(rowWidth+(colWidth-oldColWidth));
             });
@@ -703,96 +727,11 @@ $(function() {
 
       }
 
-      function length(pl) {
-        return $("tr",list).length;
-      }
-
-      function next(pl) {
-        $("tr",list).removeClass("playing");
-        if(randomPlaylist) { // random is on
-          pl.currentPos = Math.floor(Math.random()*$("tr",list).length); // refine random function later
-          loadTrack(pl.currentPos);
-        } else {
-          var nxt = $("tr:nth-child("+(pl.currentPos+2)+")",list);
-          if(nxt.length > 0) {
-            pl.currentPos++;
-            loadTrack(pl.currentPos);
-          } else if (loopPlaylist) { // if loop playlist, then jump back to first track when reached end
-            pl.currentPos = 0;
-            loadTrack(pl.currentPos);
-          }
-        }
-      }
-
-      function prev(pl) {
-        if (audio.position < 2000) {
-          var prev = $("tr:nth-child("+(pl.currentPos)+")",list);
-          if(prev.length > 0) {
-            $("tr",list).removeClass("playing");
-            pl.currentPos--;
-            loadTrack(pl.currentPos);
-          }
-        }
-        else {
-          audio.setPosition(0);
-        }
-      }
-
-      function loadTrack(tr) {
-        $("tr",list).removeClass("playing");
-//        var tr = $("tr",list).eq(pos);
-        tr.addClass("playing selected");
-        //pl.currentPos = pos;
-
-        $(document).trigger("onLoadTrack",tr.data("track"));
-
-      }
-
-      // function addTrack(track) {
-      // 
-      // 
-      //   // sanitization for display
-      //   track.description = (track.description ? track.description.replace(/(<([^>]+)>)/ig,"") : "");
-      // 
-      //   if (track.bpm == null) {
-      //     track.bpm = "";
-      //   }
-      //   if (track.creator == null) {
-      //     track.creator = "Unknown";
-      //   }
-      //   if (track.title == null) {
-      //     track.title = "Untitled";
-      //   }
-      //   if (track.duration == null) {
-      //     track.duration = 0;
-      //   }
-      //   if (track.provider_id == null) {
-      //     track.provider_id = 0;
-      //   }
-      //   if(!track.genre) {
-      //     track.genre = "";
-      //   }
-      //   //populate table
-      //   $('#playlist-row table tr')
-      //     .clone()
-      //     .css("width",SC.arraySum(colWidths)+7*7)
-      //     .find("td:nth-child(1)").css("width",colWidths[0]).end()
-      //     .find("td:nth-child(2)").css("width",colWidths[1]).text(track.title).end()
-      //     .find("td:nth-child(3)").css("width",colWidths[2]).html(track.creator).end()
-      //     .find("td:nth-child(4)").css("width",colWidths[3]).text(SC.formatMs(track.duration)).end()
-      //     .find("td:nth-child(5)").css("width",colWidths[4]).html("<img src='" + (TCP_GLOBALS.providers[track.provider_id+""] ? TCP_GLOBALS.providers[track.provider_id+""].icon_src : "") + "' />").end()
-      //     .find("td:nth-child(6)").css("width",colWidths[5]).text(track.bpm).end()
-      //     .find("td:nth-child(7)").css("width",colWidths[6]).html("<a href='#" + track.genre.replace(/\s/, "+") + "'>" + track.genre + "</a>")
-      //     .end()
-      //     .appendTo(list);
-      //   $("tr:last",list).data("track",track);
-      // }
-
       // load the playlist data
       function loadPlaylistData() {
         if(!endOfList && !loading) {
-          $("<div><div style='position:relative'><div class='throbber'></div></div></div>").appendTo(list);
-
+          $("<div><div style='position:relative'><div class='throbber'></div></div></div>").appendTo($list);
+          
           loading = true;
           // get the tracks from the backend
 
@@ -802,18 +741,18 @@ $(function() {
             var location = pl.location + "?offset=" + offset;  
           }
 
-          $.getJSON(location, function(data) {
+          $.getJSON(location, function(playlist) {            
 
             // done loading, so remove throbber
-            $("> div:last",list).remove();
+            $("> div:last",$list).remove();
 
             offset += limit;
-            if(data.tracks.length < limit) {
+            if(playlist.tracks.length < limit) {
               endOfList = true;
             }
             
             if(editable) {
-              $(list).sortable({
+              $list.sortable({
                 appendTo: "#track-drag-holder",
                 placeholder : "droppable-placeholder",
                 tolerance : "pointer",
@@ -844,7 +783,7 @@ $(function() {
             } else {
               console.log('readonly');
               // for read-only playlists, FIXME: make more DRY by moving default options to separate hash
-              $(list).sortable({
+              $list.sortable({
                 appendTo: "#track-drag-holder",
                 placeholder : "droppable-placeholder-invisible",
                 tolerance : "pointer",
@@ -871,15 +810,9 @@ $(function() {
                 }
               });
             };
-            
-            $.each(data.tracks,function() {
-              // probably check here if the track already exists in the local tracks hash
-              tracks[this.identifier] = this;
-
-              // add the track to the playlist
-              $(document).trigger("onTrackAdd",[tracks[this.identifier],pl]);
-
-            });
+                      
+            // add the track to the playlist
+            $(document).trigger("onTracksAdded",[playlist.tracks,pl]);
 
             //show new tracks with fade fx
             loading = false;
@@ -897,10 +830,7 @@ $(function() {
       }
     });
 
-    // ugly, tmp, set to not break
-    pl.is_owner = true;
-
-    $("<li listid='" + pl.identifier + "' class='" + (pl.is_owner ? "" : "shared") + " " + (pl.collaborative ? "collaborative" : "") + " " + (pl.persisted ? "" : "dont-persist") + " " + (pl.smart ? "smart" : "") + " " + (pl.search ? "search" : "") + "'><span></span><a href='#" + pl.title.replace(/\s/, "+") + "'>" + pl.title + (pl.is_owner ? "" : " <em>by " + pl.title + "</em>") + "</a><a class='collaborative' title='Make Playlist Collaborative' href='/playlists/" + pl.identifier + "'>&nbsp;</a><a class='share' title='Share Playlist' href='/share/" + pl.title + "'>&nbsp;</a><a class='delete' title='Remove Playlist' href='/playlists/" + pl.identifier + "'>&nbsp;</a></li>")
+    $("<li listid='" + pl.identifier + "' class=' " + (pl.collaborative ? "collaborative" : "") + " " + (pl.persisted ? "" : "dont-persist") + " " + (pl.smart ? "smart" : "") + " " + (pl.search ? "search" : "") + "'><span></span><a href='#" + pl.title.replace(/\s/, "+") + "'>" + pl.title + "</a><a class='collaborative' title='Make Playlist Collaborative' href='/playlists/" + pl.identifier + "'>&nbsp;</a><a class='share' title='Share Playlist' href='/share/" + pl.title + "'>&nbsp;</a><a class='delete' title='Remove Playlist' href='/playlists/" + pl.identifier + "'>&nbsp;</a></li>")
       .find('a.delete').click(function() {
         if(confirm("Do you want to delete this playlist?")) {
           destroy();
@@ -971,7 +901,7 @@ $(function() {
   
   // save the playlist tracks order
   function savePlaylist(pl) {
-    console.log(pl.tracks)
+    
     $.ajax({
       url : pl.location,
       //contentType: "application/json",
@@ -984,7 +914,7 @@ $(function() {
   // clicking on a playlist in the list of playlists
   $("#playlists li").live("click",function(e) {
     var pl = playlists[$(e.target).parents("li").attr("listid")];
-    if($(e.target).parents("li").hasClass("active") && pl.is_owner && $("body").hasClass("logged-in")) {
+    if($(e.target).parents("li").hasClass("active") && $("body").hasClass("logged-in")) {
       var that = e.target; // very strange that i can't use self here
       if(!window.editingText) { // edit in place for playlist title
         setTimeout(function() {
@@ -1115,22 +1045,32 @@ $(function() {
 
   }
 
-  $("#playlists").sortable({
-    placeholder : "droppable-placeholder",
-    helper : function(e,el) {
-      return el.clone(); // ghosted drag helper
-    },
-    opacity: 0.7,
-    delay: 30,
-    start : function(e,ui) {
-      ui.item.css("display","block"); //prevent dragged element from getting hidden
-    },
-    stop : function(e,ui) {
-      if(!ui.item.hasClass("dont-persist")) { // save if playlist is persisted
-        playlists[ui.item.attr('listid')].savePosition();          
+  // play next track
+  function playNext(tr) {
+    if(randomPlaylist) { // random is on
+      //pl.currentPos = Math.floor(Math.random()*$("tr",$list).length); // refine random function later
+    } else {
+      var $next = $(tr).next();
+      if($next.length > 0) {
+        $(document).trigger("onLoadTrack",$next);
+      } else if (loopPlaylist) { // if loop playlist, then jump back to first track when reached end
+        // if at end play first
       }
     }
-  });
+  }
+
+  // play prev track
+  function playPrev(tr) {
+    if (audio.position < 2000) {
+      var $prev = $(tr).prev();
+      if($prev.length > 0) {
+        $(document).trigger("onLoadTrack",$prev);
+      }
+    }
+    else {
+      audio.setPosition(0);
+    }
+  }
 
   function flash(message) {
     $("#flash").find("div").text(message).end().fadeIn();
@@ -1180,8 +1120,3 @@ soundManager.debugMode = false; // disable debug mode
 soundManager.defaultOptions.multiShot = false;
 soundManager.useHighPerformance = false;
 soundManager.useMovieStar = true;
-
-soundManager.onload = function() {
-  // soundManager is ready to use (create sounds and so on)
-  // init the player app
-}
