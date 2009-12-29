@@ -17,7 +17,6 @@ class Playlist < ActiveRecord::Base
   has_many :users, :through => :playlist_listings, :source => :user
   
   # belongs_to :owner
-  #OLD belongs_to :user
   
   def read_only 
     false
