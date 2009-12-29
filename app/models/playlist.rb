@@ -1,4 +1,5 @@
 class Playlist < ActiveRecord::Base
+  STATIC_GUEST_PLAYLISTS = [1]
   ALLOWED_ATTRIBUTES = [:title]
   ALL_ATTRIBUTES = [:title, :provider_id, :read_only]
 
@@ -17,6 +18,14 @@ class Playlist < ActiveRecord::Base
   has_many :users, :through => :playlist_listings, :source => :user
   
   # belongs_to :owner
+  
+  def self.static_guest_playlists
+    playlists = []
+    playlists = Playlist.find(STATIC_GUEST_PLAYLISTS)
+    return playlists
+  rescue ActiveRecord::RecordNotFound
+    return playlists
+  end
   
   def read_only 
     false

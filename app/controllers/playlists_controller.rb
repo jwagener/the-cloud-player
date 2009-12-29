@@ -3,17 +3,43 @@ require 'nokogiri'
 
 class PlaylistsController < ApplicationController
   def index
+    #TODO check security
+    add_playlists = []
+    begin
+      add_playlists = Playlist.find(session[:playlists]) unless session[:playlists].blank?
+    rescue ActiveRecord::RecordNotFound
+      flash[:notice] = "Could not find this playlist, sorry!"
+    end 
+    
     playlists = if logged_in?
+      session[:playlists] = []
+      add_playlists.each do |playlist|
+        PlaylistListing.find_or_create_by_user_id_and_playlist_id(:playlist_id => playlist.id, :user_id => current_user.id)
+      end
+      
       current_user.playlists
     else
-      [ Playlist.new(:location => 'http://sandbox-soundcloud.com/xspf?url=http://sandbox-soundcloud.com/forss/sets/soulhack').to_jspf ]
+       Playlist.static_guest_playlists + add_playlists
     end
+  
     render :json => {:playlists => playlists.map(&:to_jspf)}
   end
     
-  def view 
+  def view
     playlist = Playlist.find_by_id(params[:playlist_param])
-    render :json => playlist.to_jspf
+    
+    # TODO jw if facebook render meta data
+    
+    if request.format == :html
+      session[:playlists] ||= []
+      session[:playlists] << playlist.id
+      session[:playlists].uniq
+      @selected_playlist = playlist
+      render :template=> 'players/index', :layout => false
+    end
+    
+    render :xspf => playlist.to_xspf if request.format == :xspf || request.format == :all
+    render :json => playlist.to_jspf if request.xhr?
   end
     
   def remote
@@ -25,9 +51,16 @@ class PlaylistsController < ApplicationController
     end
     #playlist = Playlist.new(:location => params[:location], :access_token => access_token)
     playlist = Playlist.find_or_create_by_location(:location => params[:location], :access_token => access_token, :user => current_user)
-    playlist_listing = PlaylistListing.find_or_create_by_user_id_and_playlist_id(:playlist_id => playlist.id, :user_id => current_user.id)
     
-    render :json => playlist.to_jspf
+    if logged_in?
+      playlist_listing = PlaylistListing.find_or_create_by_user_id_and_playlist_id(:playlist_id => playlist.id, :user_id => current_user.id)
+    end
+    
+    if request.xhr?
+      render :json => playlist.to_jspf
+    else
+      redirect_to playlist_view_path(playlist)
+    end
   end
   
   def create
