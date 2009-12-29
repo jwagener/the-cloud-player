@@ -6,14 +6,18 @@ class CreateProviders < ActiveRecord::Migration
       t.string :host
       t.string :access_token_path
       t.string :request_token_path
-      t.string :xspf_path
     
+      t.string :consumer_token
+      t.string :consumer_secret
     
       t.boolean :supports_discovery ,                 :nil => false, :default => false
       t.boolean :supports_oauth ,                     :nil => false, :default => false
-      t.boolean :supports_oauth_anonymous_consumer ,  :nil => false, :default => false
-      t.boolean :supports_playlist_discovery ,        :nil => false, :default => false
-      t.boolean :supports_playlist_search ,           :nil => false, :default => false
+      t.boolean :supports_oauth_static_consumer ,     :nil => false, :default => false
+      t.boolean :supports_xspf_discovery ,            :nil => false, :default => false
+      t.boolean :supports_xspf_opensearch ,           :nil => false, :default => false
+      
+      t.string :xspf_discovery_path
+      t.string :xspf_opensearch_query_template
     
       t.timestamps
     end
