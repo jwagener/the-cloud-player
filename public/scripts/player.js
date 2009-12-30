@@ -1005,7 +1005,9 @@ $(function() {
     // load playlists for user
     $.getJSON("/playlists",function(d) {
       $.each(d.playlists,function() {
-        // do something useful here
+        this.tracks = [];
+        initPlaylist(this);
+        $(document).trigger("onPlaylistSwitch",d.playlists[0]);
       });
     });
 
