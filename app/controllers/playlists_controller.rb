@@ -26,20 +26,22 @@ class PlaylistsController < ApplicationController
   end
     
   def view
-    playlist = Playlist.find_by_id(params[:playlist_param])
+    @playlist = Playlist.find_by_id(params[:playlist_param])
     
     # TODO jw if facebook render meta data
     
     if request.format == :html
       session[:playlists] ||= []
-      session[:playlists] << playlist.id
+      session[:playlists] << @playlist.id
       session[:playlists].uniq
-      @selected_playlist = playlist
+      @selected_playlist = @playlist
       render :template=> 'players/index', :layout => false
     end
     
-    render :xspf => playlist.to_xspf if request.format == :xspf || request.format == :all
-    render :json => playlist.to_jspf if request.xhr?
+    #render :xspf => playlist.to_xspf if request.format == :xspf || request.format == :all
+    render :template => 'playlists/view.xspf.builder', :layout => false if request.format == :xspf || request.format == :all
+    
+    render :json => @playlist.to_jspf if request.xhr?
   end
     
   def remote
