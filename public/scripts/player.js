@@ -979,7 +979,7 @@ $(function() {
       });
 
       // show flash message if received a shared playlist
-      if(location.search.search(/add_shared_playlist/) != -1) {
+      if(location.pathname.search(/playlists/) != -1) {
         $(document).trigger("onPlaylistSwitch",playlists[$("#playlists li:last").attr("listId")]); // select shared playlist
         flash("The playlist has been added to your library");
       } else if (location.search.search(/playlist_not_found/) != -1) {
@@ -1007,8 +1007,14 @@ $(function() {
       $.each(d.playlists,function() {
         this.tracks = [];
         initPlaylist(this);
-        $(document).trigger("onPlaylistSwitch",d.playlists[0]);
       });
+      var firstPl = 0;
+      if(location.pathname.search(/playlists/) != -1) { // if playlist was shared, select this one first
+        firstPl = d.playlists.length-1;
+        flash("The playlist has been added to your library");
+      }
+      $(document).trigger("onPlaylistSwitch",d.playlists[firstPl]);
+
     });
 
     var options = {
