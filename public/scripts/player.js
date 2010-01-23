@@ -288,10 +288,8 @@ $(function() {
   }
 
   // LISTENERS
-
-  // changing the selection in a playlist
   $(document)
-    .bind("onPlaylistSelectionChange",function(e,data) {
+    .bind("onPlaylistSelectionChange",function(e,data) { // changing the selection in a playlist
       if(data.shiftKey) {
         if($(e.target).siblings(".selected").length > 0) {
           var $list = $("div[listid=" + selectedPlaylist.identifier + "]");
@@ -493,6 +491,39 @@ $(function() {
         //flash("The track " + $(ui.draggable).data("track").title + " was added to the playlist");           
       }
 
+    })
+    .bind("onPlaylistDeleted",function(e,d) {
+      $.post(playlists[d.identifier].location,{"_method":"DELETE"},function(d,status) {
+        if(status != "success") {
+          flash("Sorry, deleting the playlist failed");
+        }
+      });
+
+      // select first playlist after delete, if exists
+      if($("#playlists li:first").length > 0) {
+        $(document).trigger("onPlaylistSwitch",playlists[$("#playlists li:first").attr("listid")]);
+      }
+
+      $("#playlists li[listid=" + d.identifier + "]").fadeOut('fast');
+      $("#lists li[listid=" + d.identifier + "]").remove();
+      delete playlists[d.identifier];
+    })
+    .bind("onPlaylistShared",function(e,d) {
+      if($("body").hasClass("logged-in")) {
+        $("#share-playlist > div:first")
+          .clone()
+          .find("a.close").click(function() {
+            $(this).parents("div.share-playlist").fadeOut(function() {
+              $(this).remove();
+            });
+            return false;
+          }).end()
+          .find("input").val("http://thecloudplayer.com" + playlists[d.identifier].location).end()
+          .appendTo("body")
+          .fadeIn(function() {
+            $(".share-playlist input").focus().select();
+          });
+      }
     });
 
   // init width from cookie
@@ -648,7 +679,7 @@ $(function() {
     //pl.editable = (!pl.smart && (self.properties.playlist.collaborative || (self.properties.is_owner && !self.properties.playlist.collaborative)));
 
     // tmp hack
-    var editable = true;
+    //var editable = true;
 
     $('#playlist')
       .clone()
@@ -742,25 +773,6 @@ $(function() {
         });
       }
 
-      // delete the playlist
-      function destroy() {
-        $.post(pl.location,{"_method":"DELETE"},function(d,status) {
-          if(status != "success") {
-            flash("Sorry, deleting the playlist failed");
-          }
-        });
-
-        // select first playlist after delete, if exists
-        if($("#playlists li:first").length > 0) {
-          $(document).trigger("onPlaylistSwitch",playlists[$("#playlists li:first").attr("listid")]);
-        }
-
-        $("#playlists li[listid=" + pl.identifier + "]").fadeOut('fast');
-        $("#lists li[listid=" + pl.identifier + "]").remove();
-        delete playlists[pl.identifier];
-
-      }
-
       // load the playlist data
       function loadPlaylistData() {
         if(!endOfList && !loading) {
@@ -785,65 +797,50 @@ $(function() {
               endOfList = true;
             }
             
-            if(editable) {
-              $list.sortable({
-                appendTo: "#track-drag-holder",
+            // options for playlists sortable
+            var options = {
+              appendTo: "#track-drag-holder",
+              opacity: 0.7,
+              delay: 30,
+              tolerance : "pointer",
+              _noFinalSort : true, // mod to support multi-sortable
+              helper : function(e,el) {
+                if(!el.hasClass("selected")) { // imitate itunes selection behavior, avoid sortable bug
+                  el.addClass("selected");
+                  el.siblings("tr.selected").removeClass("selected");
+                }
+                if(el.siblings(".selected").length > 0) { // dragging more than one track
+                  var els = el.parents("tbody").find(".selected").clone();
+                  return $("<div></div>").prepend(els); // wrap all selected elements in a div
+                } else {
+                  return el.clone(); // ghosted drag helper              
+                }
+              },
+              start : function(e,ui) {
+                ui.item.css("display","block"); //prevent dragged element from getting hidden
+              }
+            };
+            
+            var moreOptions = {};
+            if(pl.read_only) {
+              moreOptions = {
+                placeholder : "droppable-placeholder-invisible",
+                sort : function(e,ui) {
+                  //ui.placeholder.remove();
+                }
+              };
+            } else {  // for writable playlists
+              moreOptions = {
                 placeholder : "droppable-placeholder",
-                tolerance : "pointer",
-                _noFinalSort : true, // mod to support multi-sortable
-                helper : function(e,el) {
-                  if(!el.hasClass("selected")) { // imitate itunes selection behavior, avoid sortable bug
-                    el.addClass("selected");
-                    el.siblings("tr.selected").removeClass("selected");
-                  }
-                  if(el.siblings(".selected").length > 0) { // dragging more than one track
-                    var els = el.parents("tbody").find(".selected").clone();
-                    return $("<div></div>").prepend(els); // wrap all selected elements in a div
-                  } else {
-                    return el.clone(); // ghosted drag helper              
-                  }
-                },
-                opacity: 0.7,
-                delay: 30,
-                start : function(e,ui) {
-                  ui.item.css("display","block"); //prevent dragged element from getting hidden
-                },
                 beforeStop : function(e,ui) {
                   $(ui.placeholder).trigger("onPlaylistOrderChange",[ui, pl]);
                 },
                 stop : function(e,ui) {
                 }
-              });
-            } else {
-              console.log('readonly');
-              // for read-only playlists, FIXME: make more DRY by moving default options to separate hash
-              $list.sortable({
-                appendTo: "#track-drag-holder",
-                placeholder : "droppable-placeholder-invisible",
-                tolerance : "pointer",
-                _noFinalSort : true, // mod to support multi-sortable
-                helper : function(e,el) {
-                  if(!el.hasClass("selected")) { // imitate itunes selection behavior, avoid sortable bug
-                    el.addClass("selected");
-                    el.siblings("tr.selected").removeClass("selected");
-                  }
-                  if(el.siblings(".selected").length > 0) { // dragging more than one track
-                    var els = el.parents("tbody").find(".selected").clone();
-                    return $("<div></div>").prepend(els); // wrap all selected elements in a div
-                  } else {
-                    return el.clone(); // ghosted drag helper              
-                  }
-                },
-                sort : function(e,ui) {
-                  //ui.placeholder.remove();
-                },
-                opacity: 0.7,
-                delay: 30,
-                start : function(e,ui) {
-                  ui.item.css("display","block"); //prevent dragged element from getting hidden
-                }
-              });
+              };
             };
+            
+            $list.sortable($.extend(moreOptions,options));
                       
             // add the track to the playlist
             $(document).trigger("onTracksAdded",[playlist.tracks,pl]);
@@ -865,30 +862,30 @@ $(function() {
     });
 
     $("<li listid='" + pl.identifier + "' class=' " + (pl.collaborative ? "collaborative" : "") + " " + (pl.persisted ? "" : "dont-persist") + " " + (pl.smart ? "smart" : "") + " " + (pl.search ? "search" : "") + "'><span></span><a href='#" + pl.title.replace(/\s/, "+") + "'>" + pl.title + "</a></li>")
-      .find('a.delete').click(function() {
-        if(confirm("Do you want to delete this playlist?")) {
-          destroy();
-        }        
-        return false;
-      }).end()
-      .find('a.share').click(function() {
-        if($("body").hasClass("logged-in")) {
-          $("#share-playlist > div:first")
-            .clone()
-            .find("a.close").click(function() {
-              $(this).parents("div.share-playlist").fadeOut(function() {
-                $(this).remove();
-              });
-              return false;
-            }).end()
-            .find("input").val(this.href).end()
-            .appendTo("body")
-            .fadeIn(function() {
-              $(".share-playlist input").focus().select();
-            });
-        }
-        return false;
-      }).end()
+      // .find('a.delete').click(function() {
+      //   if(confirm("Do you want to delete this playlist?")) {
+      //     destroy();
+      //   }        
+      //   return false;
+      // }).end()
+      // .find('a.share').click(function() {
+      //   if($("body").hasClass("logged-in")) {
+      //     $("#share-playlist > div:first")
+      //       .clone()
+      //       .find("a.close").click(function() {
+      //         $(this).parents("div.share-playlist").fadeOut(function() {
+      //           $(this).remove();
+      //         });
+      //         return false;
+      //       }).end()
+      //       .find("input").val(this.href).end()
+      //       .appendTo("body")
+      //       .fadeIn(function() {
+      //         $(".share-playlist input").focus().select();
+      //       });
+      //   }
+      //   return false;
+      // }).end()
       .find('a.collaborative').click(function() {
         if(!$(this).parents("li").hasClass("shared")) {
           $.post("/playlists/" + pl.identifier ,{"_method":"PUT","collaborative":!pl.collaborative,"version":pl.version},function() {
@@ -903,24 +900,22 @@ $(function() {
         }
         return false;
       }).end()
+  		.contextMenu({
+  			menu: 'playlist-context-menu'
+  		},
+  			function(action, el, pos) {
+  			  switch(action) {
+  			    case 'delete':
+  			      $(document).trigger('onPlaylistDeleted',{identifier: $(el).attr('listId')});
+  			      break;
+  			    case 'share':
+			        $(document).trigger('onPlaylistShared',{identifier: $(el).attr('listId')});
+  			      break;
+  			  };
+  		})
       .appendTo("#playlists");
-
-
-    // add playlist context menu
-		$('#playlists li:last').contextMenu({
-			menu: 'playlist-context-menu'
-		},
-			function(action, el, pos) {
-			alert(
-				'Action: ' + action + '\n\n' +
-				'Element ID: ' + $(el).attr('id') + '\n\n' + 
-				'X: ' + pos.x + '  Y: ' + pos.y + ' (relative to element)\n\n' + 
-				'X: ' + pos.docX + '  Y: ' + pos.docY+ ' (relative to document)'
-				);
-		});
       
-
-    if(editable) { // if playlists are smart, they are read-only
+    if(!pl.read_only) { // if playlists are smart, they are read-only
       $('#playlists li:last')
         .droppable({
           accept: function(draggable) {
