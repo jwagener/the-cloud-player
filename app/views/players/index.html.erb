@@ -29,6 +29,7 @@
   	<meta name="generator" content="TextMate http://macromates.com/"/>
   	<meta name="author" content="Eric Wahlforss"/>
     <link href="/stylesheets/player.css" media="screen" rel="stylesheet" type="text/css" />
+    <link href="/stylesheets/jquery.contextMenu.css" media="screen" rel="stylesheet" type="text/css" />
     <link href="/images/favicon.ico" rel="shortcut icon" />
     <% if @selected_playlist %>
       <link type="application/xspf+xml" rel="alternate" 
@@ -42,16 +43,16 @@
     <%=
       %w{
       firebugx.js
-      jquery-1.3.1.min.js
+      jquery-1.4.min.js
       soundmanager2.js
       md5.js
+      effects.core.js
       ui.core.js
-      ui.datepicker.js
       ui.draggable.js
       ui.droppable.js
       ui.slider.js
       ui.sortable.js
-      jquery.history_remote.js
+      jquery.contextMenu.js
       jquery.cookie.js
       utils.js
       player.js
@@ -64,6 +65,13 @@
   
   </head>
   <body unselectable="on" class="<%= @current_user ? "logged-in" : "logged-out" %>">
+    <ul id="playlist-context-menu" class="contextMenu">
+			<li class="edit"><a href="#edit">Share</a></li>
+			<li class="cut separator"><a href="#cut">Rename</a></li>
+			<li class="copy"><a href="#copy">Copy link</a></li>
+			<li class="delete"><a href="#delete">Delete</a></li>
+		</ul>
+
     <div id="flash"><div></div></div>
     <div id="header">
       <div id="login">

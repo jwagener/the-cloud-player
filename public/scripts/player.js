@@ -830,7 +830,7 @@ $(function() {
       }
     });
 
-    $("<li listid='" + pl.identifier + "' class=' " + (pl.collaborative ? "collaborative" : "") + " " + (pl.persisted ? "" : "dont-persist") + " " + (pl.smart ? "smart" : "") + " " + (pl.search ? "search" : "") + "'><span></span><a href='#" + pl.title.replace(/\s/, "+") + "'>" + pl.title + "</a><a class='collaborative' title='Make Playlist Collaborative' href='/playlists/" + pl.identifier + "'>&nbsp;</a><a class='share' title='Share Playlist' href='/share/" + pl.title + "'>&nbsp;</a><a class='delete' title='Remove Playlist' href='/playlists/" + pl.identifier + "'>&nbsp;</a></li>")
+    $("<li listid='" + pl.identifier + "' class=' " + (pl.collaborative ? "collaborative" : "") + " " + (pl.persisted ? "" : "dont-persist") + " " + (pl.smart ? "smart" : "") + " " + (pl.search ? "search" : "") + "'><span></span><a href='#" + pl.title.replace(/\s/, "+") + "'>" + pl.title + "</a></li>")
       .find('a.delete').click(function() {
         if(confirm("Do you want to delete this playlist?")) {
           destroy();
@@ -870,6 +870,21 @@ $(function() {
         return false;
       }).end()
       .appendTo("#playlists");
+
+
+    // add playlist context menu
+		$('#playlists li:last').contextMenu({
+			menu: 'playlist-context-menu'
+		},
+			function(action, el, pos) {
+			alert(
+				'Action: ' + action + '\n\n' +
+				'Element ID: ' + $(el).attr('id') + '\n\n' + 
+				'X: ' + pos.x + '  Y: ' + pos.y + ' (relative to element)\n\n' + 
+				'X: ' + pos.docX + '  Y: ' + pos.docY+ ' (relative to document)'
+				);
+		});
+      
 
     if(editable) { // if playlists are smart, they are read-only
       $('#playlists li:last')
