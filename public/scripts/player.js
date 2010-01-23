@@ -29,7 +29,7 @@ $(function() {
       audioTracks = {}, // hash for all sound objects
       playlists = {}, // this is the hash of all playlists
       tracks = {}, // this is the hash of all tracks
-      colWidths = new Array(20,250,130,50,250,50,100), // default col widths for playlists
+      colWidths = new Array(20,250,130,50,30,50,100), // default col widths for playlists
       $progress = $('#progress div:first'), // player progress bar
       $loading = $('#progress div.loading'), // player loading bar
       $progressParent = $('#progress');
@@ -74,10 +74,20 @@ $(function() {
     $("#about-box").fadeIn();
     ev.preventDefault();
   });
+  
+  $('a#test-link').click(function(ev){
+    $('div#popup').fadeIn().find('.content').replaceWith('<h1>jojo</h1>');
+  });
 
   // close about box
-  $("#about-box a.close").click(function(ev) {
+/*  $("#about-box a.close").click(function(ev) {
     $("#about-box").fadeOut();
+    ev.preventDefault();
+  });
+*/
+
+  $("div.popup a.close").click(function(ev) {
+    $(this).closest('div.popup').fadeOut();
     ev.preventDefault();
   });
 
@@ -224,11 +234,35 @@ $(function() {
       }).end()
       .find("input:first").val("").end()
       .find("input:last").click(function() {
-        $.post("/playlists",{location:$(this).parents("div.add-xspf-playlist").find("input:first").val()},function(pl) {
+        /*$.post("/playlists",{location:$(this).parents("div.add-xspf-playlist").find("input:first").val()},function(pl) {
+          
+          console.log(pl);
           pl.tracks = []; // reset tracks
           initPlaylist(pl);
           $(document).trigger("onPlaylistSwitch",pl);
-        },"json");
+        },"json");*/
+        
+        $.ajax({
+          //dataType: 'json',
+          type: "POST",
+          url:  '/playlists',
+          data: {location:$(this).parents("div.add-xspf-playlist").find("input:first").val()},
+          success: function(response, status) {
+            if(response.status === 201 || response.status === 200){
+              //pl = JSON.parse(response.responseText)
+              pl = reponse;
+              pl.tracks = []; // reset tracks
+              initPlaylist(pl);
+              $(document).trigger("onPlaylistSwitch",pl);
+            }else{
+              $('div#popup').fadeIn().find('.content').replaceWith(response);
+            }
+          },
+          error: function(r1,r2,r3){            
+            console.log('Something went wrong!');
+          }
+        });
+    
 
         $(this).parents("div.add-xspf-playlist").fadeOut(function() {
           $(this).remove();

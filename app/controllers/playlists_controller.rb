@@ -46,14 +46,10 @@ class PlaylistsController < ApplicationController
     
   def remote
     location = params[:location]
-    if URI.parse(location).host == 'sandbox-soundcloud.com'
-      access_token = current_user
-    else
-      access_token = nil
-    end
     #playlist = Playlist.new(:location => params[:location], :access_token => access_token)
+    head 401
+
     playlist = Playlist.find_or_create_by_location(:location => params[:location], :access_token => access_token, :user => current_user)
-    
     if logged_in?
       playlist_listing = PlaylistListing.find_or_create_by_user_id_and_playlist_id(:playlist_id => playlist.id, :user_id => current_user.id)
     end
@@ -71,7 +67,15 @@ class PlaylistsController < ApplicationController
       Playlist.create(params.slice(*Playlist::ALLOWED_ATTRIBUTES).merge({:user_id => current_user.id}))
     else
       # a remote playlist
-      Playlist.create(:location => params[:location], :user_id => current_user.id)
+      begin
+        playlist = Playlist.new(:location => params[:location], :user_id => current_user.id)
+        playlist.save!
+      rescue Exception => e
+        #if 401 and provider supports oauth
+        p playlist
+        return render :status => 202, :partial => 'players/authentication_required_box', :object => playlist.provider
+    
+      end
     end
 
     playlist_listing = PlaylistListing.find_or_create_by_user_id_and_playlist_id(:playlist_id => playlist.id, :user_id => current_user.id)
@@ -102,7 +106,6 @@ class PlaylistsController < ApplicationController
     playlist.listings.destroy_all
     
     tracks_params.each_with_index do |track_params, i|
-      p track_params
       track = Track.find_or_create_by_id({:id => track_params['identifier']}.merge(track_params))
       playlist.listings.create!(:track => track, :position => i)
       #track = Track.find_or_create_by_location(track_params, :include => [:listings])

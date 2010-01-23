@@ -1,0 +1,17 @@
+- provider = authentication_required_box
+%h1
+  Access to this playlist requires authorization!
+%form{:class => 'open-in-popup'}
+  %p
+    The service 
+    %b= provider.name
+    supports the <b>PlayOpen</b> standard.
+  %p 
+    Thats great, because this means the <b>CloudPlayer</b> can access your protected playlists on
+    %b= provider.name
+    , so you can add this playlist to your other playlists on the CloudPlayer.
+    All you need to do approving the CloudPlayer. 
+  %div{:style => 'float: right;'}
+    %a Cancel
+    %input{:type => 'submit', :value => "Let's do it!"}
+    

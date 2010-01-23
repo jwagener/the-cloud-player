@@ -17,6 +17,7 @@
     #flash
       %div
     #header
+
       #login
         - # TODO jw <a href="" id="about">About</a> |
         .login
@@ -32,6 +33,10 @@
           |
           %a.do-logout{ :href => "/soundcloud-connect/logout" }
             Logout
+      .actions{:style => 'display: inline; float: left;'}
+        %a#test-link{:href => '#'}
+          Test link
+        
       %img#logo{ :src => "/images/logo.png" }
       %input#q{ :name => "q", :maxlength => "50", :accesskey => "f", :value => "Search Artists &amp; Tracks", :type => "search" }
     #main-container
@@ -121,94 +126,13 @@
             .playhead
           .loading
         #duration
-    #about-box
-      %a.close{ :href => "#close" }
-        X
-      %h1
-        The Cloud Player
-      %img#about-thumb{ :src => "/images/about-thumb.png", :height => "238", :alt => "Thumbnail", :width => "294" }
-      %p
-        The Cloud Player is a
-        %strong
-          web-based music player
-        that let’s you...
-      %ul#feature-list
-        %li#feature-find
-          %span
-          %strong
-            Find and play
-          all tracks from SoundCloud
-        %li#feature-save
-          %span
-          %strong
-            Save playlists
-          to your Google Account
-        %li#feature-smart
-          %span
-          Make
-          %strong
-            smart playlists
-          based on genre, BPM, etc
-        %li#feature-share
-          %span
-          %strong
-            Share
-          your ready-made playlists with your friends
-        %li#feature-collaborate
-          %span
-          %strong
-            Collaborate
-          in making the best playlists ever
-      #built-by
-        %p
-          %img{ :src => "/images/erichenrik.png", :height => "51", :alt => "Henrik &amp; Eric", :width => "90" }
-          Built by
-          %a{ :href => "http://hinkeb.com" }
-            Henrik Berggren
-          \&amp;
-          %a{ :href => "http://eric.wahlforss.com" }
-            Eric Wahlforss
-          using
-          %a{ :href => "http://appengine.google.com" }
-            Google App Engine
-          ,
-          %a{ :href => "http://python.org" }
-            Python
-          ,
-          %a{ :href => "http://jquery.com" }
-            jQuery
-          ,
-          %a{ :href => "http://www.schillmania.com/projects/soundmanager2/" }
-            SoundManager 2
-          ,
-          %a{ :href => "http://www.everaldo.com/crystal/" }
-            Crystal
-          and the
-          %a{ :href => "http://soundcloud.com/api" }
-            SoundCloud API
-          \. Also thanks to
-          %a{ :href => "http://bassistance.de/" }
-            Jörn
-          for the back-button support. Do you want to contribute? Go ahead and
-          %a{ :href => "http://github.com/hinke/the-cloud-player/tree/master" }
-            fork from GitHub
-          \!
-    #providers-box
-      %a.close{ :href => "#close" }
-        X
-      %h1
-        Music Providers
-      %p
-        These are the music sources you have currently installed:
-      %ul
-        %li
-          SoundCloud.com
-        %li
-          Hypem.com
-        %li
-          Citysounds.fm
-        %li
-          Forssmusic.com
+    = render :partial => 'about_box'
+    = render :partial => 'provider_box'
+    - # = render :partial => 'authentication_required_box'
+    #popup.popup
+      %a.close{ :href => "#close" }= "X"
+      .content
+    
     #templates
       #playlist
         %table.list-header
@@ -251,7 +175,7 @@
           Send this link to anyone who you want to share this playlist with:
         %input{ :value => "foobar", :type => "text" }
     #add-xspf-playlist
-      .add-xspf-playlist
+      .add-xspf-playlist.popup
         %a.close{ :href => "#close" }
           X
         %h1
