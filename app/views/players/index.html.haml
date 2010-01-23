@@ -1,0 +1,195 @@
+!!! Strict
+%html{ "xml:lang" => "en", :lang => "en", :xmlns => "http://www.w3.org/1999/xhtml" }
+  %head
+    %meta{ :content => "text/html; charset=utf-8", "http-equiv" => "Content-Type" }
+    %title
+      The Cloud Player
+    %meta{ :name => "generator", :content => "TextMate http://macromates.com/" }
+    %meta{ :name => "author", :content => "Eric Wahlforss" }
+    %link{ :href => "/stylesheets/player.css", :rel => "stylesheet", :type => "text/css", :media => "screen" }
+    %link{ :href => "/images/favicon.ico", :rel => "shortcut icon" }
+    - if @selected_playlist
+      %link{ :href => playlist_view_url(@selected_playlist, :format => :xspf), :rel => "alternate", :type => "application/xspf+xml" }
+    %script{ :type => "text/javascript" }
+      = "var TCP_GLOBALS = #{javascript_globals.to_json}"
+    = %w{ firebugx.js jquery-1.4.min.js soundmanager2.js md5.js effects.core.js ui.core.js ui.draggable.js ui.droppable.js ui.slider.js ui.sortable.js jquery.contextMenu.js jquery.cookie.js utils.js player.js sc-connect.js }.map do |js|  "<script type='text/javascript' src='/scripts/#{js}'></script>" end.join(' ')
+  %body{ :unselectable => "on", :class => @current_user ? "logged-in" : "logged-out" }
+    %ul.contextMenu#playlist-context-menu
+    	%li.edit
+    	  %a{:href =>"#edit"} Share
+    	%li.cut.separator
+    	  %a{:href=> "#cut"} Rename
+    	%li.copy
+    	  %a{:href=>"#copy"} Copy link
+    	%li.delete
+    	  %a{:href=>"#delete"} Delete
+    #flash
+      %div
+    #header
+
+      #login
+        - # TODO jw <a href="" id="about">About</a> |
+        .login
+          - form_tag(session_url) do
+            = text_field_tag "openid_url", "http://your.openid.org", :style => "display: inline;"
+        .logout
+          Hej
+          %span.current-user-name
+            = @current_user.identity_url if @current_user
+          |
+          %a#providers{ :href => "#" }
+            Providers
+          |
+          %a.do-logout{ :href => "/soundcloud-connect/logout" }
+            Logout
+      .actions{:style => 'display: inline; float: left;'}
+        %a#test-link{:href => '#'}
+          Test link
+        
+      %img#logo{ :src => "/images/logo.png" }
+      %input#q{ :name => "q", :maxlength => "50", :accesskey => "f", :value => "Search Artists &amp; Tracks", :type => "search" }
+    #main-container
+      #artist-info
+        %div
+          %a.close{ :href => "#close" }
+            x
+          %h3
+            This is the artist
+          %p
+            This is the desc
+          %p.check-on-sc
+            %a{ :href => "#sc" }
+              Go to the artist on SoundCloud »
+        %img{ :src => "http://a1.soundcloud.com/avatars/0001/1308/i039964_big.jpg" }
+      #create-smart-playlist
+        %h4
+          Create a smart playlist
+        %form#pl-create-form
+          .col-1
+            %label{ :for => "pl-genre" }
+              Genre
+            %input#pl-genre{ :type => "text" }
+            %label{ :for => "pl-favorite" }
+              User favorite
+            %input#pl-favorite{ :value => "Username", :type => "text" }
+            %input#pl-bpm-range-start{ :type => "hidden" }
+            %input#pl-bpm-range-stop{ :type => "hidden" }
+            %label#bpm-range-label
+              BPM Range
+            .bpm-range
+              %label#bpm-range-start
+                50
+              #pl-bpm-range-slider.ui-slider-1
+                #bpm-handle-start.ui-slider-handle
+                #bpm-handle-stop.ui-slider-handle
+              %label#bpm-range-stop
+                200
+          .col-2
+            %label{ :for => "pl-search-term" }
+              Search term
+            %input#pl-search-term{ :type => "text" }
+            %label{ :for => "pl-artist" }
+              Artist
+            %input#pl-artist{ :type => "text" }
+            %label{ :for => "pl-order" }
+              Order by
+            %select#pl-order
+              %option{ :selected => "selected", :value => "hotness" }
+                Hotness
+              %option{ :value => "created_at" }
+                Latest
+          .buttons
+            %input#pl-create{ :value => "Create", :type => "submit" }
+            %a#pl-cancel{ :href => "#cancel" }
+              Cancel
+      #lists
+        %table#track-drag-holder
+    #sidebar
+      %ul#playlists
+      #create-playlists
+        %a#add-playlist{ :href => "#" }
+          Playlist
+        /
+          <a id="add-smart-playlist" href="#">Smart Playlist</a>
+        %a#add-xspf-playlist{ :href => "#" }
+          XSPF
+      #artwork
+        %img{ :src => "http://a1.soundcloud.com/avatars/0001/1308/i039964_big.jpg" }
+    #footer
+      %input#prev{ :src => "/images/empty.png", :value => "&nbsp;", :type => "image" }
+      %input#play{ :src => "/images/empty.png", :value => "&nbsp;", :type => "image" }
+      %input#next{ :src => "/images/empty.png", :value => "&nbsp;", :type => "image" }
+      %input#rand{ :title => "Shuffle Playlist", :src => "/images/empty.png", :value => "&nbsp;", :type => "image" }
+      %input#loop{ :title => "Repeat Playlist", :src => "/images/empty.png", :value => "&nbsp;", :type => "image" }
+      #speaker-mute
+      #volume.ui-slider-1
+        .ui-slider-handle
+      #speaker
+      #player-display
+        %img.logo{ :src => "/images/logo-mini.png" }
+        #artist
+        #position
+        #progress
+          %img.waveform{ :src => "/images/empty.png" }
+          .inner
+            .playhead
+          .loading
+        #duration
+    = render :partial => 'about_box'
+    = render :partial => 'provider_box'
+    - # = render :partial => 'authentication_required_box'
+    #popup.popup
+      %a.close{ :href => "#close" }= "X"
+      .content
+    
+    #templates
+      #playlist
+        %table.list-header
+          %thead
+            %tr
+              %th
+                \&nbsp;
+              %th
+                Title
+              %th
+                Artist
+              %th
+                Time
+              %th
+                Src
+              %th
+                BPM
+              %th
+                Genre
+        %div
+          %table
+            %tbody
+      #playlist-row
+        %table
+          %tr
+            %td
+            %td
+            %td
+            %td
+            %td
+            %td
+            %td
+    #share-playlist
+      .share-playlist
+        %a.close{ :href => "#close" }
+          X
+        %h1
+          Share This Playlist
+        %p
+          Send this link to anyone who you want to share this playlist with:
+        %input{ :value => "foobar", :type => "text" }
+    #add-xspf-playlist
+      .add-xspf-playlist.popup
+        %a.close{ :href => "#close" }
+          X
+        %h1
+          Add XSPF Playlist
+        %p
+          Add any XSPF playlist on the web by pasting it in this box:
+        %input{ :value => "foobar", :type => "text" }
+        %input{ :value => "Add Playlist", :type => "submit" }
