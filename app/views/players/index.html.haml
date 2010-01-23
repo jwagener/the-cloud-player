@@ -15,14 +15,14 @@
     = %w{ firebugx.js jquery-1.4.min.js soundmanager2.js md5.js effects.core.js ui.core.js ui.draggable.js ui.droppable.js ui.slider.js ui.sortable.js jquery.contextMenu.js jquery.cookie.js utils.js player.js sc-connect.js }.map do |js|  "<script type='text/javascript' src='/scripts/#{js}'></script>" end.join(' ')
   %body{ :unselectable => "on", :class => @current_user ? "logged-in" : "logged-out" }
     %ul.contextMenu#playlist-context-menu
-    	%li.edit
-    	  %a{:href =>"#edit"} Share
-    	%li.cut.separator
-    	  %a{:href=> "#cut"} Rename
-    	%li.copy
-    	  %a{:href=>"#copy"} Copy link
-    	%li.delete
-    	  %a{:href=>"#delete"} Delete
+      %li.edit
+        %a{:href =>"#edit"} Share
+      %li.cut.separator
+        %a{:href=> "#cut"} Rename
+      %li.copy
+        %a{:href=>"#copy"} Copy link
+      %li.delete
+        %a{:href=>"#delete"} Delete
     #flash
       %div
     #header
