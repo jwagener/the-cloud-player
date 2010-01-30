@@ -6,14 +6,25 @@ class ApplicationController < ActionController::Base
   helper :all # include all helpers, all the time
   #protect_from_forgery # See ActionController::RequestForgeryProtection for details
 
-  before_filter :set_current_user
+  before_filter :restore_current_user_session
   
-  def set_current_user
-    @current_user = session['current_user_id'].blank? ? nil : User.find(session['current_user_id'])
+  def login_required
+    # TODO work around, oauth overwrites @current_user?
+    restore_current_user_session if @current_user.blank?  
+    raise "Not logged" unless logged_in?
   end
 
+  def admin_required
+    raise 'Not allowed' unless logged_in? && @current_user.id = 1
+  end
+
+  def restore_current_user_session
+    logger.debug params
+    @current_user = User.find(session[:current_user_id]) unless session[:current_user_id].blank?
+  end
+  
   def logged_in?
-    !!@current_user
+    !!current_user
   end
   
   def current_user

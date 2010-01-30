@@ -33,13 +33,16 @@ class Playlist < ActiveRecord::Base
   
   def refresh
     p "Refreshing #{location}"
+    self.provider = Provider.from_uri(location)
+    
+    p self.provider
+    p xspf
     playlist = Hash.from_xml(xspf)['playlist']
     uri = URI.parse(location)
     
-    self.provider = Provider.from_host(uri.host)
-    
+#    self.provider = Provider.from_host(uri.host)
     self.title = playlist['title'].blank? ? uri.host : playlist['title']
-    self.location = playlist['location']
+    #self.location = playlist['location']
     self.identifier = playlist['location']
   end
   
@@ -60,13 +63,26 @@ class Playlist < ActiveRecord::Base
   end
   
   def xspf
-    return @xspf if @xspf
-    if access_token_id.nil?
-      @xspf = Net::HTTP.get(URI.parse(location))      
+    #return @xspf if @xspf
+    logger.debug 'xspf no ca'
+    unless self.protected?
+      @xspf = Net::HTTP.get(URI.parse(location))  
+      
+      logger.debug location    
+      logger.debug 'plain get'
+      #logger.debug @xspf
     else
+      logger.debug 'oauth get'
+      access_token = self.provider.access_tokens.first
       parsed_uri = URI.parse(location)
       relative_location = "#{parsed_uri.path}?#{parsed_uri.query}" 
+      
+      logger.debug relative_location
+      p access_token.real_access_token
+      
       @xspf = access_token.real_access_token.get(relative_location).body
+      logger.debug @xspf
+      
     end    
     
     @xspf

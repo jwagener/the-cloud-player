@@ -6,6 +6,7 @@ class CreateProviders < ActiveRecord::Migration
       t.string :host
       t.string :access_token_path
       t.string :request_token_path
+      t.string :authorize_path
     
       t.string :consumer_token
       t.string :consumer_secret

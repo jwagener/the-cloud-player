@@ -8,6 +8,7 @@ class Provider < ActiveRecord::Base
     :opensearch => 'http://a9.com/-/spec/opensearch/1.1/',
     :xrd => 'http://docs.oasis-open.org/ns/xri/xrd-1.0'
   }
+  
   XRD_REL = { 
     :oauth_core_initiate             => 'http://oauth.net/core/1.0/endpoint/initiate',
     :oauth_core_token                => 'http://oauth.net/core/1.0/endpoint/token',
@@ -17,7 +18,7 @@ class Provider < ActiveRecord::Base
     :xspf_discovery                 => 'http://playo.org/1.0/endpoint/discovery',
     :opensearch                     => 'http://a9.com/-/spec/opensearch/1.1/',
     #:xspf_search                    => 'http://playo.org/1.0/endpoint/search'
-    }
+  }
   
   
   has_many :access_tokens
@@ -25,19 +26,45 @@ class Provider < ActiveRecord::Base
   
   before_create :discover_capabilities
   
-  def discover_capabilities
+  def consumer
+    @consumer = OAuth::Consumer.new(consumer_token, consumer_secret, {
+      :site               => "http://#{host}",
+      :scheme             => :header,
+      :http_method        => :post,
+      :request_token_path => URI.parse(request_token_path).path,
+      :access_token_path  => URI.parse(access_token_path).path,
+      :authorize_path     => URI.parse(authorize_path).path
+     })
+  end
+  
+  def name
+    read_attribute(:name) || host
+  end
+  
+  def discover_capabilities 
+    logger.debug 'Doing discovery'
     # TODO isolate each discovery part from each other exception wise
     # parse /.well_known/
     discover_oauth 
     discover_xspf_discovery
     discover_xspf_opensearch
+    logger.debug "Finished Discovery"
   rescue SocketError, OpenURI::HTTPError
-    p 'Error'
+    logger.debug 'Error in discovery'
   end
   
   def self.from_host(host)
     provider = find_or_create_by_host(:host => host)
     # do cool stuff like getting a nice favicon!  
+    #    provider.save!
+    provider
+  end
+
+  def self.from_uri(uri)
+    uri = URI.parse(uri)
+    provider = find_or_create_by_host(:host => "#{uri.host}:#{uri.port}")
+    p provider
+    provider.save! 
     provider
   end
 
@@ -51,24 +78,29 @@ private
   def xrd
     return @xrd if @xrd
     @xrd = Nokogiri::XML(open("http://#{self.host}#{WELL_KNOWN_HOST_META_PATH}"))
+    
+    p @xrd
     @xrd
   end
   
   def get_xrd_link_for(service)
-    link = xrd.xpath("//xrd:Link[@rel='#{service}']", 'xrd' => XML_NS[:xrd])
+    link = xrd.xpath("//xrd:link[@rel='#{service}']", 'xrd' => XML_NS[:xrd])
     link.length > 0 ? link.first : nil
   end
 
   def discover_oauth
-   initiate_link  = get_xrd_link_for(XRD_REL[:oauth_core_initiate])
+    logger.warn 'oauth disc'
+    logger.warn  xrd
+    initiate_link  = get_xrd_link_for(XRD_REL[:oauth_core_initiate])
     token_link     = get_xrd_link_for(XRD_REL[:oauth_core_token])
     authorize_link = get_xrd_link_for(XRD_REL[:oauth_core_authorize])
     
+    logger.warn token_link 
     if initiate_link && token_link && authorize_link
       self.supports_oauth = true
       self.request_token_path = initiate_link.attributes['href'].value
       self.access_token_path = token_link.attributes['href'].value
-    
+      self.authorize_path    =  authorize_link.attributes['href'].value
       discover_oauth_static_consumer
     end
     self.supports_oauth

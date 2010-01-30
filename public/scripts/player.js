@@ -21,6 +21,26 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 $(function() {
+
+  window.addPlaylistFromJSON = function(json){
+    console.log('doing');
+    pl = reponse;
+    pl.tracks = []; // reset tracks
+    initPlaylist(pl);
+    $(document).trigger("onPlaylistSwitch",pl);
+    console.log('done');
+  };
+  
+  window.OAuth = {
+    callback: function(){
+      console.log('callbacked!');
+    }
+  };
+  $('form.oauth-popup').live('submit', function(){
+    var popup = window.open($(this).attr('action'), "sc_connect_popup","location=1, width=456, height=500,toolbar=no,scrollbars=yes");
+    return(false);
+  });
+  
   var justDropped = false, //fixme, ugly replacement for bad callback
       randomPlaylist = parseInt($.cookie('random_playlist')), // read random mode from cookie
       loopPlaylist = parseInt($.cookie('loop_playlist')), // read loop mode from cookie
@@ -248,12 +268,9 @@ $(function() {
           url:  '/playlists',
           data: {location:$(this).parents("div.add-xspf-playlist").find("input:first").val()},
           success: function(response, status) {
-            if(response.status === 201 || response.status === 200){
-              //pl = JSON.parse(response.responseText)
-              pl = reponse;
-              pl.tracks = []; // reset tracks
-              initPlaylist(pl);
-              $(document).trigger("onPlaylistSwitch",pl);
+            if(typeof(response) === "object"){
+              console.log(response);
+              window.addPlaylistFromJSON(response);
             }else{
               $('div#popup').fadeIn().find('.content').replaceWith(response);
             }

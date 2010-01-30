@@ -4,7 +4,7 @@ class AccessToken < ActiveRecord::Base
   belongs_to :provider
   belongs_to :user
   
-  after_create :get_xspf_playlists
+  #after_create :get_xspf_playlists
   
   def get_xspf_playlists
     Hash.from_xml(get('/xspf/index').body)['playlistList']['playlist'].each do |playlist_hash|      
@@ -37,7 +37,7 @@ class AccessToken < ActiveRecord::Base
 
   # the real thing
   def real_access_token
-    OAuth::AccessToken.new($soundcloud_consumer, key, secret)
+    OAuth::AccessToken.new(provider.consumer, key, secret)
   end
   
   #TODO srsly?

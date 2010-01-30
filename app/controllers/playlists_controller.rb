@@ -66,16 +66,22 @@ class PlaylistsController < ApplicationController
       # local
       Playlist.create(params.slice(*Playlist::ALLOWED_ATTRIBUTES).merge({:user_id => current_user.id}))
     else
-      # a remote playlist
+      # a remote playlist   
+      provider = Provider.from_uri(params[:location])
       begin
+logger.debug params[:location]
         playlist = Playlist.new(:location => params[:location], :user_id => current_user.id)
         playlist.save!
       rescue Exception => e
+        p e
         #if 401 and provider supports oauth
-        p playlist
+        #playlist.provider.save!
+        session[:add_playlist_location] = params[:location]
         return render :status => 202, :partial => 'players/authentication_required_box', :object => playlist.provider
-    
+
       end
+      
+      playlist
     end
 
     playlist_listing = PlaylistListing.find_or_create_by_user_id_and_playlist_id(:playlist_id => playlist.id, :user_id => current_user.id)
