@@ -31,21 +31,21 @@
 	padding-left: 28px;
 }
 
-.contextMenu LI.hover A {
+.contextMenu li.hover a {
 	color: #FFF;
 	background-color: #3399FF;
 }
 
-.contextMenu LI.disabled A {
+.contextMenu li.disabled a {
 	color: #AAA;
 	cursor: default;
 }
 
-.contextMenu LI.hover.disabled A {
+.contextMenu li.hover.disabled a {
 	background-color: transparent;
 }
 
-.contextMenu LI.separator {
+.contextMenu li.separator {
 	border-top: solid 1px #CCC;
 }
 
@@ -56,9 +56,10 @@
 	classes to the respective LI element(s)
 */
 
-.contextMenu LI.edit A { background-image: url(/images/page_white_edit.png); }
-.contextMenu LI.cut A { background-image: url(/images/cut.png); }
-.contextMenu LI.copy A { background-image: url(/images/page_white_copy.png); }
-.contextMenu LI.paste A { background-image: url(/images/page_white_paste.png); }
-.contextMenu LI.delete A { background-image: url(/images/page_white_delete.png); }
-.contextMenu LI.quit A { background-image: url(/images/door.png); }
+.contextMenu li.edit a { background-image: url(/images/page_white_edit.png); }
+.contextMenu li.share a { background-image: url(/images/page_white_edit.png); }
+.contextMenu li.cut a { background-image: url(/images/cut.png); }
+.contextMenu li.copy a { background-image: url(/images/page_white_copy.png); }
+.contextMenu li.paste a { background-image: url(/images/page_white_paste.png); }
+.contextMenu li.delete a { background-image: url(/images/page_white_delete.png); }
+.contextMenu li.quit a { background-image: url(/images/door.png); }
