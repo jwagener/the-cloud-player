@@ -23,7 +23,7 @@ class Track < ActiveRecord::Base
       :creator => creator,
       :provider_id => provider_id,
       :title   => title,
-      :duration => 3333,
+      :duration => duration,
       :location => location,
       :identifier => id
     }

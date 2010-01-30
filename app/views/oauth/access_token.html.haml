@@ -1,7 +1,9 @@
 %html
   %head
     %title "OAuth Access Token accepted"
-    = content_for :javascript do 
-      = "window.addEventListener('load',function(){ window.opener.OAuth.callback(#{@playlist.to_jspf if @playlist}); },true);"
+    - #= content_for :javascript do 
+    %script
+      - p @playlist.to_jspf.to_json
+      = "window.addEventListener('load',function(){ window.opener.OAuth.callback(#{@playlist.to_jspf.to_json if @playlist}); }, true);"
   %body
     Everything is fine!

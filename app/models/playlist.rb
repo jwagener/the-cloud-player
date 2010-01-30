@@ -28,7 +28,7 @@ class Playlist < ActiveRecord::Base
   end
   
   def read_only 
-    false
+    remote?
   end
   
   def refresh
@@ -109,7 +109,7 @@ class Playlist < ActiveRecord::Base
     ALL_ATTRIBUTES.each do |k|
       playlist[k] = self.send(k)
     end
-    playlist[:read_only] = true
+    playlist[:read_only] = read_only
     playlist['identifier'] = id
     playlist['location'] = remote? ? playlist_view_path(self) : location
     

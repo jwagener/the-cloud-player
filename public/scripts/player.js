@@ -22,22 +22,27 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 $(function() {
 
-  window.addPlaylistFromJSON = function(json){
-    console.log('doing');
-    pl = reponse;
-    pl.tracks = []; // reset tracks
-    initPlaylist(pl);
-    $(document).trigger("onPlaylistSwitch",pl);
-    console.log('done');
+  window.addPlaylistFromJSON = function(response){
+    response.tracks = []; // reset tracks
+    initPlaylist(response);
+    $(document).trigger("onPlaylistSwitch", response);
   };
   
   window.OAuth = {
-    callback: function(){
-      console.log('callbacked!');
+    popups: [],
+    callback: function(response){
+      window.addPlaylistFromJSON(response);
+      
+      $('div#popup').fadeOut();
+      console.log(window.OAuth);
+      for(var i=0; i < window.OAuth.popups.length; i++){
+        console.log(i, "f");
+        window.OAuth.popups[i].close();
+      }
     }
   };
   $('form.oauth-popup').live('submit', function(){
-    var popup = window.open($(this).attr('action'), "sc_connect_popup","location=1, width=456, height=500,toolbar=no,scrollbars=yes");
+    window.OAuth.popups.push(window.open($(this).attr('action'), "sc_connect_popup","location=1, width=456, height=500,toolbar=no,scrollbars=yes"));
     return(false);
   });
   
@@ -269,7 +274,6 @@ $(function() {
           data: {location:$(this).parents("div.add-xspf-playlist").find("input:first").val()},
           success: function(response, status) {
             if(typeof(response) === "object"){
-              console.log(response);
               window.addPlaylistFromJSON(response);
             }else{
               $('div#popup').fadeIn().find('.content').replaceWith(response);
@@ -429,7 +433,7 @@ $(function() {
       }
     })
     .bind("onPlaylistSwitch",function(e,pl) { // change order of a playlist
-      
+      console.log('dabai!');
       $("#lists > div").hide();
       $("#lists > div[listid="+pl.identifier+"]").show();
       $("#playlists li").removeClass("active");
